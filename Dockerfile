@@ -1,8 +1,12 @@
 FROM golang:1.6-alpine
 
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-COPY . /usr/src/app
+ENV GOPATH /usr/go
+ENV SRCPATH $GOPATH/src/github.com/danielkrainas/canaria-api
+RUN mkdir -p $SRCPATH
+
+RUN mkdir -p $SRCPATH
+WORKDIR $SRCPATH
+COPY . $SRCPATH
 
 RUN go build
 

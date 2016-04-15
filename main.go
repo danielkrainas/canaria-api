@@ -6,6 +6,7 @@ import (
 	"github.com/danielkrainas/canaria-api/config"
 	"github.com/danielkrainas/canaria-api/logging"
 	"github.com/danielkrainas/canaria-api/storage"
+	_ "github.com/danielkrainas/canaria-api/storage/drivers"
 )
 
 func main() {

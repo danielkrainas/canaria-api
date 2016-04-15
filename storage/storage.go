@@ -29,7 +29,7 @@ type Storage struct {
 func New(storageConfig *config.StorageConfig) *Storage {
 	factory, ok := drivers[storageConfig.Driver]
 	if !ok {
-		logging.Error.Fatalf("storage driver not found: %s", storageConfig.Driver)
+		logging.Error.Fatalf("storage driver \"%s\" not found", storageConfig.Driver)
 		return nil
 	}
 

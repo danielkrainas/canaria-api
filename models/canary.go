@@ -37,7 +37,7 @@ func (c *Canary) Kill() {
 
 func (c *Canary) IsZombie() bool {
 	t := time.Unix(c.Refreshed+c.TimeToLive, 0)
-	return t.After(time.Now())
+	return time.Now().After(t)
 }
 
 func (c *Canary) IsDead() bool {

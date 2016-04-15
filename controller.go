@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 
@@ -79,6 +81,8 @@ func loadCanaryTopic(ctx *context, r *http.Request) (*models.Canary, error) {
 }
 
 func StoreCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
+	logging.Trace.Println("StoreCanary: begin")
+	defer logging.Trace.Println("StoreCanary: end")
 	cr, err := readcanaryRequest(r)
 	if err != nil {
 		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
@@ -94,12 +98,15 @@ func StoreCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logging.Info.Printf("create %s %d", c.ID, c.TimeToLive)
 	if err = sendCanary(w, c, http.StatusCreated); err != nil {
 		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
 	}
 }
 
 func KillCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
+	logging.Trace.Println("KillCanary: begin")
+	defer logging.Trace.Println("KillCanary: end")
 	c, err := loadCanaryTopic(ctx, r)
 	if err != nil {
 		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
@@ -112,9 +119,11 @@ func KillCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logging.Info.Printf("kill %s", c.ID)
 	c.Kill()
 	err = ctx.store.Save(c)
 	if err != nil {
+		logging.Error.Printf("KillCanary: error saving canary: %s", err.Error())
 		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
 		return
 	}
@@ -123,6 +132,8 @@ func KillCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 }
 
 func PokeCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
+	logging.Trace.Println("PokeCanary: begin")
+	defer logging.Trace.Println("PokeCanary: end")
 	c, err := loadCanaryTopic(ctx, r)
 	if err != nil {
 		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
@@ -131,19 +142,22 @@ func PokeCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	} else if c.IsZombie() {
+		logging.Info.Printf("kill zombie %s", c.ID)
 		c.Kill()
 		err := ctx.store.Save(c)
 		if err != nil {
-			logging.Error.Printf("server.PokeCanary: error saving canary: %s", err.Error())
+			logging.Error.Printf("PokeCanary: error saving canary: %s", err.Error())
 		}
 
 		http.NotFound(w, r)
 		return
 	}
 
+	logging.Info.Printf("refresh %s", c.ID)
 	c.Refresh()
 	err = ctx.store.Save(c)
 	if err != nil {
+		logging.Error.Printf("PokeCanary: error saving canary: %s", err.Error())
 		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
 		return
 	}
@@ -154,6 +168,8 @@ func PokeCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
+	logging.Trace.Println("GetCanary: begin")
+	defer logging.Trace.Println("GetCanary: end")
 	c, err := loadCanaryTopic(ctx, r)
 	if err != nil {
 		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
@@ -168,7 +184,7 @@ func GetCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 		c.Kill()
 		err := ctx.store.Save(c)
 		if err != nil {
-			logging.Error.Printf("server.GetCanary: error saving canary: %s", err.Error())
+			logging.Error.Printf("GetCanary: error saving canary: %s", err.Error())
 		}
 
 		http.Error(w, ErrMsgDead, http.StatusGone)
@@ -184,9 +200,10 @@ func GetCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 
 func buildServer(ctx *context) {
 	r := mux.NewRouter()
-	r.HandleFunc("/canary/:id/:token", ctx.Contextify(PokeCanary)).Methods("POST")
-	r.HandleFunc("/canary/:id", ctx.Contextify(KillCanary)).Methods("DELETE")
-	r.HandleFunc("/canary/:id", ctx.Contextify(GetCanary)).Methods("HEAD", "GET")
+	r.HandleFunc("/canary/{id}/{token}", ctx.Contextify(PokeCanary)).Methods("POST")
+	r.HandleFunc("/canary/{id}", ctx.Contextify(KillCanary)).Methods("DELETE")
+	r.HandleFunc("/canary/{id}", ctx.Contextify(GetCanary)).Methods("HEAD", "GET")
 	r.HandleFunc("/canary", ctx.Contextify(StoreCanary)).Methods("PUT")
-	http.ListenAndServe(":6789", r)
+	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
+	http.ListenAndServe(":6789", loggedRouter)
 }

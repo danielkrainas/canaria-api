@@ -119,9 +119,7 @@ func KillCanary(ctx *context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = sendCanary(w, c, http.StatusOK); err != nil {
-		http.Error(w, ErrMsgBadRequest, http.StatusBadRequest)
-	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func PokeCanary(ctx *context, w http.ResponseWriter, r *http.Request) {

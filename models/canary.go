@@ -10,12 +10,13 @@ import (
 )
 
 type Canary struct {
-	ID          string `json:"id"`
-	TimeToLive  int64  `json:"ttl"`
-	Refreshed   int64  `json:"refreshed"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	NextToken   string `json:"next"`
+	ID          string     `json:"id"`
+	TimeToLive  int64      `json:"ttl"`
+	Refreshed   int64      `json:"refreshed"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	NextToken   string     `json:"next"`
+	Hooks       []*WebHook `json:"hooks"`
 }
 
 func generateNextToken(currentToken string) string {

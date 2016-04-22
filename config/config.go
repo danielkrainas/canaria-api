@@ -96,7 +96,6 @@ func mapEnvToObject(data interface{}, path string) error {
 			break
 
 		case reflect.String:
-			logging.Trace.Println(key)
 			fv.SetString(os.Getenv(key))
 			break
 

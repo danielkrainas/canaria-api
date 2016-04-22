@@ -16,12 +16,18 @@ type StorageConfig struct {
 
 type Config struct {
 	Storage *StorageConfig
+
+	Auth *AuthConfig
 }
 
 func newConfig() *Config {
 	config := &Config{}
 	config.Storage = &StorageConfig{}
 	config.Storage.Driver = "memory"
+	config.Auth = &AuthConfig{}
+	config.Auth.Htpasswd = &HtpasswdAuthConfig{}
+	config.Auth.Silly = &SillyAuthConfig{}
+	config.Auth.Scheme = ""
 	return config
 }
 

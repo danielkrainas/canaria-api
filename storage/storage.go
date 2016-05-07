@@ -6,9 +6,7 @@ import (
 	"github.com/danielkrainas/canaria-api/models"
 )
 
-var (
-	drivers map[string]StorageDriverFactory = make(map[string]StorageDriverFactory)
-)
+var drivers map[string]StorageDriverFactory = make(map[string]StorageDriverFactory)
 
 func RegisterDriver(key string, factory StorageDriverFactory) {
 	drivers[key] = factory

@@ -12,10 +12,20 @@ import (
 type App struct {
 	context.Context
 
-	Config       *config.Config
-	router       *mux.Router
-	storage      storage.StorageDriver
+	Config *configuration.Config
+
+	router *mux.Router
+
+	storage storage.StorageDriver
+
 	authStrategy auth.AuthStrategy
 
 	readOnly bool
+}
+
+func NewApp(ctx Context, config *configuration.Config) *App {
+	app := &App{
+		Context: ctx,
+		Config:  config,
+	}
 }

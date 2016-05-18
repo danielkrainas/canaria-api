@@ -1,6 +1,7 @@
-package errorcode
+package errcode
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 )
@@ -12,8 +13,8 @@ var (
 )
 
 var (
-	nextCode = 1000
-	register sync.Mutex
+	nextCode     = 1000
+	registerLock sync.Mutex
 )
 
 func Register(group string, descriptor ErrorDescriptor) ErrorCode {

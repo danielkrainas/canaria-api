@@ -1,4 +1,4 @@
-package errorcode
+package errcode
 
 import (
 	"encoding/json"
@@ -19,7 +19,15 @@ func (ec ErrorCode) ErrorCode() ErrorCode {
 }
 
 func (ec ErrorCode) Error() string {
-	return strings.ToLower(strings.Replace(ec.String(), old, new, n))
+	return strings.ToLower(strings.Replace(ec.String(), "_", " ", -1))
+}
+
+func (ec ErrorCode) Descriptor() ErrorDescriptor {
+	if d, ok := errorCodeToDescriptors[ec]; ok {
+		return d
+	}
+
+	return ErrorCodeUnknown.Descriptor()
 }
 
 func (ec ErrorCode) String() string {
@@ -37,7 +45,7 @@ func (ec ErrorCode) MarshalText() ([]byte, error) {
 func (ec *ErrorCode) UnmarshalText(text []byte) error {
 	desc, ok := idToDescriptors[string(text)]
 	if !ok {
-		desc = ErrorCodeUnknown
+		desc = ErrorCodeUnknown.Descriptor()
 	}
 
 	*ec = desc.Code
@@ -70,14 +78,14 @@ func (ec ErrorCode) WithArgs(args ...interface{}) Error {
 }
 
 type Error struct {
-	Code    ErrorCode `json:"code"`
-	Message string    `json:"message"`
-	Detail  string    `json:"detail,omitempty"`
+	Code    ErrorCode   `json:"code"`
+	Message string      `json:"message"`
+	Detail  interface{} `json:"detail,omitempty"`
 }
 
 var _ error = Error{}
 
-func (e Error) ErrorCode() {
+func (e Error) ErrorCode() ErrorCode {
 	return e.Code
 }
 
@@ -113,7 +121,7 @@ type errorsStruct struct {
 	Errors []Error `json:"errors,omitempty"`
 }
 
-type Errors []Error
+type Errors []error
 
 var _ error = Error{}
 
@@ -158,13 +166,13 @@ func (errs Errors) MarshalJSON() ([]byte, error) {
 
 		msg := rerr.Message
 		if msg == "" {
-			msg = err.Code.Message()
+			msg = rerr.Code.Message()
 		}
 
 		tmp.Errors = append(tmp.Errors, Error{
 			Code:    rerr.Code,
 			Message: msg,
-			Detail:  err.Detail,
+			Detail:  rerr.Detail,
 		})
 	}
 

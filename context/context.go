@@ -38,7 +38,7 @@ func Background() Context {
 	return background
 }
 
-var stringMapContext struct {
+type stringMapContext struct {
 	context.Context
 	vals map[string]interface{}
 }
@@ -46,7 +46,7 @@ var stringMapContext struct {
 func WithValues(ctx context.Context, vals map[string]interface{}) context.Context {
 	nvals := make(map[string]interface{}, len(vals))
 	for k, v := range vals {
-		nvals[ka] = v
+		nvals[k] = v
 	}
 
 	return stringMapContext{

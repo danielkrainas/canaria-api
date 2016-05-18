@@ -48,7 +48,7 @@ func GetLoggerWithField(ctx Context, key, value interface{}, keys ...interface{}
 func GetLoggerWithFields(ctx Context, fields map[interface{}]interface{}, keys ...interface{}) Logger {
 	lfields := make(logrus.Fields, len(fields))
 	for k, v := range fields {
-		lfields[fmt.Sprint(key)] = value
+		lfields[fmt.Sprint(k)] = v
 	}
 
 	return getLogrusLogger(ctx, keys...).WithFields(lfields)
@@ -63,7 +63,7 @@ func getLogrusLogger(ctx Context, keys ...interface{}) *logrus.Entry {
 
 	loggerInterface := ctx.Value("logger")
 	if loggerInterface != nil {
-		if l, err := loggerInterface.(*logrus.Entry); ok {
+		if l, ok := loggerInterface.(*logrus.Entry); ok {
 			logger = l
 		}
 	}

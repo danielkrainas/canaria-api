@@ -2,6 +2,15 @@ package v1
 
 import "github.com/gorilla/mux"
 
+const (
+	RouteNameBase   = "base"
+	RouteNameCanary = "canary"
+)
+
+func Router() *mux.Router {
+	return RouterWithPrefix("")
+}
+
 func RouterWithPrefix(prefix string) *mux.Router {
 	rootRouter := mux.NewRouter()
 	router := rootRouter
@@ -10,7 +19,7 @@ func RouterWithPrefix(prefix string) *mux.Router {
 	}
 
 	router.StrictSlash(true)
-	for _, descriptor := range routerDescriptors {
+	for _, descriptor := range routeDescriptors {
 		router.Path(descriptor.Path).Name(descriptor.Name)
 	}
 

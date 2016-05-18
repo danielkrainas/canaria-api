@@ -15,6 +15,7 @@ func RegisterDriver(key string, factory StorageDriverFactory) {
 type StorageDriverFactory func() StorageDriver
 
 type StorageDriver interface {
+	IsDeleted(id string) bool
 	Get(id string) (*models.Canary, error)
 	Save(c *models.Canary) error
 	Delete(id string) error

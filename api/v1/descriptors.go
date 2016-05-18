@@ -192,7 +192,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 				Requests: []describe.RequestDescriptor{
 					{
 
-					}
+					},
 				},
 			},
 		},
@@ -224,7 +224,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 	{
-		Name: "webhook ping",
+		Name: "webhook test",
 		Path: "/v1/canary/{id:" + IdRegex.String() + "}/hooks/{id:" + IdRegex.String() + "}/ping",
 		Entity: "WebHook",
 		Description: "",
@@ -235,7 +235,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 				Requests: []describe.RequestDescriptor{
 					{
 
-					}
+					},
 				},
 			},
 		},

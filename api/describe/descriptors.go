@@ -3,7 +3,7 @@ package describe
 import (
 	"regexp"
 
-	"github.com/danielkrainas/canaria-api/api/errorcode"
+	"github.com/danielkrainas/canaria-api/api/errcode"
 )
 
 type RouteDescriptor struct {
@@ -37,7 +37,7 @@ type ResponseDescriptor struct {
 	StatusCode  int
 	Headers     []ParameterDescriptor
 	Fields      []ParameterDescriptor
-	ErrorCodes  []errorcode.ErrorCode
+	ErrorCodes  []errcode.ErrorCode
 	Body        BodyDescriptor
 }
 

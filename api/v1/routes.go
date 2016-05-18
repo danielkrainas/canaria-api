@@ -3,8 +3,12 @@ package v1
 import "github.com/gorilla/mux"
 
 const (
-	RouteNameBase   = "base"
-	RouteNameCanary = "canary"
+	RouteNameBase        = "base"
+	RouteNameCanaries    = "canaries"
+	RouteNameCanary      = "canary"
+	RouteNameWebhook     = "webhook"
+	RouteNameWebhooks    = "webhooks"
+	RouteNameWebhookTest = "webhook-test"
 )
 
 func Router() *mux.Router {

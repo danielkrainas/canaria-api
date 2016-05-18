@@ -129,7 +129,7 @@ var APIDescriptor = struct {
 
 var routeDescriptors = []describe.RouteDescriptor{
 	{
-		Name:        "base",
+		Name:        RouteNameBase,
 		Path:        "/v1/",
 		Entity:      "Base",
 		Description: "Base V1 API route, can be used for lightweight version checks and to validate authentication.",
@@ -167,7 +167,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 	{
-		Name:        "canaries",
+		Name:        RouteNameCanaries,
 		Path:        "/v1/canary/",
 		Entity:      "Canary",
 		Description: "",
@@ -233,7 +233,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 	{
-		Name:        "canary",
+		Name:        RouteNameCanary,
 		Path:        "/v1/canary/{id:" + IdRegex.String() + "}",
 		Entity:      "Canary",
 		Description: "",
@@ -362,9 +362,9 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 	{
-		Name:        "webhooks",
+		Name:        RouteNameWebhooks,
 		Path:        "/v1/canary/{id:" + IdRegex.String() + "}/hooks",
-		Entity:      "WebHook",
+		Entity:      "Webhook",
 		Description: "",
 		Methods: []describe.MethodDescriptor{
 			{
@@ -379,9 +379,9 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 	{
-		Name:        "webhook",
+		Name:        RouteNameWebhook,
 		Path:        "/v1/canary/{id:" + IdRegex.String() + "}/hooks/{id:" + IdRegex.String() + "}",
-		Entity:      "WebHook",
+		Entity:      "Webhook",
 		Description: "",
 		Methods: []describe.MethodDescriptor{
 			{
@@ -401,9 +401,9 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 	{
-		Name:        "webhook test",
+		Name:        RouteNameWebhookTest,
 		Path:        "/v1/canary/{id:" + IdRegex.String() + "}/hooks/{id:" + IdRegex.String() + "}/ping",
-		Entity:      "WebHook",
+		Entity:      "Webhook",
 		Description: "",
 		Methods: []describe.MethodDescriptor{
 			{

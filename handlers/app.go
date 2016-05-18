@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/danielkrainas/canaria-api/auth"
-	"github.com/danielkrainas/canaria-api/config"
+	"github.com/danielkrainas/canaria-api/configuration"
 	"github.com/danielkrainas/canaria-api/storage"
 
 	"github.com/gorilla/mux"

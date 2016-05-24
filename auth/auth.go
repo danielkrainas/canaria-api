@@ -3,6 +3,14 @@ package auth
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/danielkrainas/canaria-api/context"
+)
+
+var (
+	UserKey = "auth.user"
+
+	UserNameKey = "auth.user.name"
 )
 
 type AuthStrategy interface {

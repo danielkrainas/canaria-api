@@ -234,7 +234,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 	},
 	{
 		Name:        RouteNameCanary,
-		Path:        "/v1/canary/{id:" + IdRegex.String() + "}",
+		Path:        "/v1/canary/{canary_id:" + IdRegex.String() + "}",
 		Entity:      "Canary",
 		Description: "",
 		Methods: []describe.MethodDescriptor{
@@ -363,12 +363,12 @@ var routeDescriptors = []describe.RouteDescriptor{
 	},
 	{
 		Name:        RouteNameWebhooks,
-		Path:        "/v1/canary/{id:" + IdRegex.String() + "}/hooks",
+		Path:        "/v1/canary/{canary_id:" + IdRegex.String() + "}/hooks",
 		Entity:      "Webhook",
 		Description: "",
 		Methods: []describe.MethodDescriptor{
 			{
-				Method:      "POST",
+				Method:      "PUT",
 				Description: "",
 				Requests: []describe.RequestDescriptor{
 					{
@@ -380,7 +380,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 	},
 	{
 		Name:        RouteNameWebhook,
-		Path:        "/v1/canary/{id:" + IdRegex.String() + "}/hooks/{id:" + IdRegex.String() + "}",
+		Path:        "/v1/canary/{canary_id:" + IdRegex.String() + "}/hooks/{hook_id:" + IdRegex.String() + "}",
 		Entity:      "Webhook",
 		Description: "",
 		Methods: []describe.MethodDescriptor{
@@ -402,7 +402,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 	},
 	{
 		Name:        RouteNameWebhookTest,
-		Path:        "/v1/canary/{id:" + IdRegex.String() + "}/hooks/{id:" + IdRegex.String() + "}/ping",
+		Path:        "/v1/canary/{canary_id:" + IdRegex.String() + "}/hooks/{hook_id:" + IdRegex.String() + "}/ping",
 		Entity:      "Webhook",
 		Description: "",
 		Methods: []describe.MethodDescriptor{

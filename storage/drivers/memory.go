@@ -3,7 +3,7 @@ package drivers
 import (
 	"errors"
 
-	"github.com/danielkrainas/canaria-api/models"
+	"github.com/danielkrainas/canaria-api/common"
 	"github.com/danielkrainas/canaria-api/storage"
 )
 
@@ -12,16 +12,16 @@ func init() {
 }
 
 type memoryStorage struct {
-	canaries map[string]*models.Canary
+	canaries map[string]*common.Canary
 }
 
 func memoryDriverFactory() storage.StorageDriver {
 	return &memoryStorage{
-		canaries: make(map[string]*models.Canary),
+		canaries: make(map[string]*common.Canary),
 	}
 }
 
-func (driver *memoryStorage) Get(id string) (*models.Canary, error) {
+func (driver *memoryStorage) Get(id string) (*common.Canary, error) {
 	c, ok := driver.canaries[id]
 	if !ok {
 		return nil, errors.New("entry not found")
@@ -30,7 +30,7 @@ func (driver *memoryStorage) Get(id string) (*models.Canary, error) {
 	return c, nil
 }
 
-func (driver *memoryStorage) Save(c *models.Canary) error {
+func (driver *memoryStorage) Save(c *common.Canary) error {
 	driver.canaries[c.ID] = c
 	return nil
 }
@@ -38,4 +38,8 @@ func (driver *memoryStorage) Save(c *models.Canary) error {
 func (driver *memoryStorage) Delete(id string) error {
 	delete(driver.canaries, id)
 	return nil
+}
+
+func (driver *memoryStorage) IsDeleted(id string) bool {
+	return false
 }

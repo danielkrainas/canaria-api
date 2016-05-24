@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"github.com/danielkrainas/canaria-api/config"
+	"github.com/danielkrainas/canaria-api/common"
+	"github.com/danielkrainas/canaria-api/configuration"
 	"github.com/danielkrainas/canaria-api/logging"
-	"github.com/danielkrainas/canaria-api/models"
 )
 
 var drivers map[string]StorageDriverFactory = make(map[string]StorageDriverFactory)
@@ -16,8 +16,8 @@ type StorageDriverFactory func() StorageDriver
 
 type StorageDriver interface {
 	IsDeleted(id string) bool
-	Get(id string) (*models.Canary, error)
-	Save(c *models.Canary) error
+	Get(id string) (*common.Canary, error)
+	Save(c *common.Canary) error
 	Delete(id string) error
 }
 
@@ -25,7 +25,7 @@ type Storage struct {
 	driver StorageDriver
 }
 
-func New(storageConfig *config.StorageConfig) *Storage {
+func New(storageConfig *configuration.StorageConfig) *Storage {
 	factory, ok := drivers[storageConfig.Driver]
 	if !ok {
 		logging.Error.Fatalf("storage driver \"%s\" not found", storageConfig.Driver)
@@ -37,11 +37,11 @@ func New(storageConfig *config.StorageConfig) *Storage {
 	}
 }
 
-func (s *Storage) Get(id string) (*models.Canary, error) {
+func (s *Storage) Get(id string) (*common.Canary, error) {
 	return s.driver.Get(id)
 }
 
-func (s *Storage) Save(c *models.Canary) error {
+func (s *Storage) Save(c *common.Canary) error {
 	return s.driver.Save(c)
 }
 

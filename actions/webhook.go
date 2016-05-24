@@ -1,4 +1,4 @@
-package models
+package actions
 
 import (
 	"bytes"
@@ -11,17 +11,12 @@ import (
 	"net/url"
 	"reflect"
 
-	"github.com/danielkrainas/canaria-api/logging"
-	"github.com/satori/go.uuid"
+	"github.com/danielkrainas/canaria-api/common"
+	"github.com/danielkrainas/canaria-api/context"
+	"github.com/danielkrainas/canaria-api/uuid"
 )
 
-const (
-	JsonContent = "json"
-	FormContent = "form"
-
-	EventDead = "dead"
-	EventPing = "ping"
-
+var (
 	HookEventHeader     = "X-Canary-Event"
 	HookDeliveryHeader  = "X-Canary-Delivery"
 	HookSignatureHeader = "X-Canary-Signature"
@@ -29,61 +24,29 @@ const (
 	HookUserAgent = "Canary-Hooker/0.0.1"
 )
 
-type WebHook struct {
-	ID          string   `json:"id"`
-	ContentType string   `json:"content_type"`
-	Secret      string   `json:"secret"`
-	InsecureSSL bool     `json:"insecure_ssl"`
-	Url         string   `json:"url"`
-	Events      []string `json:"events"`
-	Active      bool     `json:"active"`
-}
-
-type WebHookNotification struct {
-	Action string  `json:"action"`
-	Canary *Canary `json:"canary"`
-}
-
-func NewWebHook() *WebHook {
-	return &WebHook{
-		ID:     uuid.NewV4().String(),
-		Events: []string{},
-	}
-}
-
-func (wh *WebHook) Validate() error {
-
-	return nil
-}
-
-func (wh *WebHook) Deactivate() {
-	wh.Active = false
-	logging.Warning.Printf("deactivate webhook %s", wh.ID)
-}
-
-func (wh *WebHook) Notify(c *Canary, eventType string) error {
-	deliveryID := uuid.NewV4()
-	n := &WebHookNotification{
+func Notify(ctx context.Context, wh *WebHook, c *common.Canary, eventType string) error {
+	deliveryID := uuid.Generate()
+	n := &common.WebHookNotification{
 		Action: eventType,
 		Canary: c,
 	}
 
 	req, err := http.NewRequest(http.MethodPost, wh.Url, nil)
 	if err != nil {
-		logging.Error.Printf("WebHook.Notify: error creating request: %s", err.Error())
+		context.GetLogger(ctx).Errorf("WebHook.Notify: error creating request: %v", err)
 		wh.Deactivate()
 		return err
 	}
 
 	req.Header.Set(HookEventHeader, eventType)
 	req.Header.Set(HookDeliveryHeader, deliveryID.String())
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("User-Agent", HookUserAgent)
 
 	if wh.ContentType == FormContent {
 		form, err := formEncode(n, "")
 		if err != nil {
-			logging.Error.Printf("WebHook.Notify: error encoding form: %s", err.Error())
+			context.GetLogger(ctx).Errorf("WebHook.Notify: error encoding form: %v", err)
 			wh.Deactivate()
 			return err
 		}
@@ -92,7 +55,7 @@ func (wh *WebHook) Notify(c *Canary, eventType string) error {
 	} else {
 		encoded, err := json.Marshal(n)
 		if err != nil {
-			logging.Error.Printf("WebHook.Notify: error encoding json: %s", err.Error())
+			context.GetLogger(ctx).Errorf("WebHook.Notify: error encoding json: %v", err)
 			wh.Deactivate()
 			return err
 		}

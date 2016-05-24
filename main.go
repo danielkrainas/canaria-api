@@ -8,24 +8,11 @@ import (
 
 	"github.com/danielkrainas/canaria-api/configuration"
 	"github.com/danielkrainas/canaria-api/context"
-	"github.com/danielkrainas/canaria-api/storage"
-	_ "github.com/danielkrainas/canaria-api/storage/drivers"
+	"github.com/danielkrainas/canaria-api/listener"
 
 	log "github.com/Sirupsen/logrus"
 	ghandlers "github.com/gorilla/handlers"
 )
-
-func main() {
-	appConfig, err := config.LoadConfig()
-	if err != nil {
-		logging.Error.Fatal(err)
-		os.Exit(1)
-	}
-
-	store := storage.New(appConfig.Storage)
-	ctx := newContext(store)
-	buildServer(ctx)
-}
 
 func main() {
 	ctx := context.WithVersion(context.Background(), "0.0.1-alpha")
@@ -75,6 +62,19 @@ func newCanaryServer(ctx context.Context, config *configuration.Config) (*Canary
 	return s, nil
 }
 
+func (server *CanaryServer) ListenAndServe() error {
+	config := server.config
+
+	ln, err := listener.NewListener(config.HTTP.Net, config.HTTP.Addr)
+	if err != nil {
+		return err
+	}
+
+	// TODO: add TLS support
+	context.GetLogger(server.app).Infof("listening on %v", ln.Addr())
+	return server.server.Serve(ln)
+}
+
 func configureLogging(ctx context.Context, config *configuration.Config) (context.Context, error) {
 	log.SetLevel(log.AllLevels)
 
@@ -84,4 +84,28 @@ func configureLogging(ctx context.Context, config *configuration.Config) (contex
 
 	ctx = context.WithLogger(ctx, context.GetLogger(ctx))
 	return ctx, nil
+}
+
+func panciHandler(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Panicf("%v", err)
+			}
+		}()
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
+func alive(path string, handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == path {
+			w.Header().Set("Cache-Control", "no-cache")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		handler.ServeHTTP()
+	})
 }

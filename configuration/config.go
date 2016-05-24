@@ -6,8 +6,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-
-	"github.com/danielkrainas/canaria-api/logging"
 )
 
 type StorageConfig struct {
@@ -33,7 +31,7 @@ func newConfig() *Config {
 
 func validKey(key string, value string) bool {
 	if value == "" {
-		logging.Trace.Printf("WARNING: key %s should not be empty", key)
+		//logging.Trace.Printf("WARNING: key %s should not be empty", key)
 		return false
 	}
 

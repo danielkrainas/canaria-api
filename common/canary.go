@@ -1,9 +1,11 @@
-package models
+package common
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -50,5 +52,15 @@ func (c *Canary) Validate() error {
 		return errors.New("time to live must be greater than 0")
 	}
 
+	return nil
+}
+
+func ServeCanaryJSON(w http.ResponseWriter, c *Canary, status int) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if err := json.NewEncoder(w).Encode(c); err != nil {
+		return err
+	}
+
+	w.WriteHeader(status)
 	return nil
 }

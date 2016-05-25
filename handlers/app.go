@@ -10,6 +10,7 @@ import (
 	"github.com/danielkrainas/canaria-api/configuration"
 	"github.com/danielkrainas/canaria-api/context"
 	"github.com/danielkrainas/canaria-api/storage"
+	"github.com/danielkrainas/canaria-api/storage/factory"
 
 	"github.com/gorilla/mux"
 )
@@ -43,10 +44,14 @@ type appRequestContext struct {
 }
 
 func getApp(ctx context.Context) *App {
-	return ctx.Value("app")
+	if app, err := ctx.Value("app").(*App); !err {
+		return app
+	}
+
+	return nil
 }
 
-func NewApp(ctx context.Context, config *configuration.Config) (*App, error) {
+func NewApp(ctx context.Context, config *configuration.Config) *App {
 	app := &App{
 		Context: ctx,
 		Config:  config,
@@ -62,10 +67,21 @@ func NewApp(ctx context.Context, config *configuration.Config) (*App, error) {
 	app.register(v1.RouteNameWebhooks, webhooksDispatcher)
 	app.register(v1.RouteNameWebhookTest, webhookTestDispatcher)
 
-	return app, nil
+	storageParams := config.Storage.Parameters()
+	if storageParams == nil {
+		storageParams = make(configuration.Parameters)
+	}
+
+	storage, err := factory.Create(config.Storage.Type(), storageParams)
+	if err != nil {
+		panic(err)
+	}
+
+	app.storage = storage
+	return app
 }
 
-func (app *App) loadWebhook(ctx *appRequestContext) *errcode.ErrorCode {
+func (app *App) loadWebhook(ctx *appRequestContext) error {
 	canary := context.GetCanary(ctx)
 	if canary != nil {
 		hook := context.GetCanaryHook(ctx, canary)
@@ -84,8 +100,8 @@ func (app *App) loadWebhook(ctx *appRequestContext) *errcode.ErrorCode {
 	return nil
 }
 
-func (app *App) loadCanary(ctx *appRequestContext) *errcode.ErrorCode {
-	if canary, err := app.storage.Get(context.GetCanaryID(ctx)); err != nil {
+func (app *App) loadCanary(ctx *appRequestContext) error {
+	if canary, err := app.storage.Get(ctx, context.GetCanaryID(ctx)); err != nil {
 		context.GetLogger(ctx).Errorf("error resolving canary: %v", err)
 		// TODO: come back to this, append unknown or invalid error
 		/*switch err := err.(type) {
@@ -99,7 +115,7 @@ func (app *App) loadCanary(ctx *appRequestContext) *errcode.ErrorCode {
 		} else {
 			context.GetLoggerWithField(ctx, "canary.id", canary.ID).Warnf("killing zombie")
 			canary.Kill()
-			if err := app.storage.Save(canary); err != nil {
+			if err := app.storage.Save(ctx, canary); err != nil {
 				context.GetLogger(ctx).Errorf("error killing zombie canary: %v", err)
 			}
 		}
@@ -126,13 +142,13 @@ func (app *App) dispatcher(dispatch dispatchFunc) http.Handler {
 		ctx.Context = context.WithErrors(ctx.Context, make(errcode.Errors, 0))
 
 		if app.canaryIdRequired(r) {
-			ec := app.loadCanary(ctx)
-			if ec == nil && app.hookIdRequired(r) {
-				ec = app.loadWebhook(ctx)
+			err := app.loadCanary(ctx)
+			if err == nil && app.hookIdRequired(r) {
+				err = app.loadWebhook(ctx)
 			}
 
-			if ec != nil {
-				ctx.Context = context.AppendError(ctx.Context, *ec)
+			if err != nil {
+				ctx.Context = context.AppendError(ctx.Context, err)
 				if err := errcode.ServeJSON(w, context.GetErrors(ctx)); err != nil {
 					context.GetLogger(ctx).Errorf("error serving error json: %v (from %v)", err, context.GetErrors(ctx))
 				}

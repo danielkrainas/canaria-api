@@ -24,7 +24,7 @@ var (
 	HookUserAgent = "Canary-Hooker/0.0.1"
 )
 
-func Notify(ctx context.Context, wh *WebHook, c *common.Canary, eventType string) error {
+func Notify(ctx context.Context, wh *common.WebHook, c *common.Canary, eventType string) error {
 	deliveryID := uuid.Generate()
 	n := &common.WebHookNotification{
 		Action: eventType,
@@ -39,14 +39,13 @@ func Notify(ctx context.Context, wh *WebHook, c *common.Canary, eventType string
 	}
 
 	req.Header.Set(HookEventHeader, eventType)
-	req.Header.Set(HookDeliveryHeader, deliveryID.String())
+	req.Header.Set(HookDeliveryHeader, deliveryID)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("User-Agent", HookUserAgent)
 
-	if wh.ContentType == FormContent {
+	if wh.ContentType == common.FormContent {
 		form, err := formEncode(n, "")
 		if err != nil {
-			context.GetLogger(ctx).Errorf("WebHook.Notify: error encoding form: %v", err)
 			wh.Deactivate()
 			return err
 		}
@@ -55,7 +54,6 @@ func Notify(ctx context.Context, wh *WebHook, c *common.Canary, eventType string
 	} else {
 		encoded, err := json.Marshal(n)
 		if err != nil {
-			context.GetLogger(ctx).Errorf("WebHook.Notify: error encoding json: %v", err)
 			wh.Deactivate()
 			return err
 		}
@@ -79,7 +77,6 @@ func Notify(ctx context.Context, wh *WebHook, c *common.Canary, eventType string
 			err = fmt.Errorf("unexpected status \"%d %s\" encountered", res.StatusCode, res.Status)
 		}
 
-		logging.Error.Printf("WebHook.Notify: transmission error: %s", err.Error())
 		return err
 	}
 

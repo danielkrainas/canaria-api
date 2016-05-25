@@ -1,17 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 
-	"github.com/danielkrainas/canaria-api/api/v1"
+	"github.com/danielkrainas/canaria-api/api/errcode"
 	"github.com/danielkrainas/canaria-api/common"
 	"github.com/danielkrainas/canaria-api/context"
 )
@@ -39,8 +33,8 @@ func (ch *canaryHandler) KillCanary(w http.ResponseWriter, r *http.Request) {
 
 	context.GetLogger(ch).Warn("killing canary")
 	c.Kill()
-	if err := getApp(ch).store.Save(c); err != nil {
-		ch.Context = context.AppendError(ch.Context, v1.ErrorCodeInternal.WithDetail(err))
+	if err := getApp(ch).storage.Save(ch, c); err != nil {
+		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
 	}
 
@@ -54,8 +48,8 @@ func (ch *canaryHandler) PokeCanary(w http.ResponseWriter, r *http.Request) {
 
 	context.GetLogger(ch).Info("refresh canary")
 	c.Refresh()
-	if err := getApp(ch).storage.Save(c); err != nil {
-		ch.Context = context.AppendError(ch.Context, v1.ErrorCodeInternal.WithDetail(err))
+	if err := getApp(ch).storage.Save(ch, c); err != nil {
+		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
 	}
 
@@ -68,7 +62,7 @@ func (ch *canaryHandler) GetCanary(w http.ResponseWriter, r *http.Request) {
 	c := context.GetCanary(ch)
 	if r.Method == http.MethodHead {
 		w.WriteHeader(http.StatusNoContent)
-	} else if err = common.ServeCanaryJSON(w, c, http.StatusOK); err != nil {
+	} else if err := common.ServeCanaryJSON(w, c, http.StatusOK); err != nil {
 		context.GetLogger(ch).Errorf("error sending canary json: %v", err)
 	}
 }

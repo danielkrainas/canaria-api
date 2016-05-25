@@ -1,19 +1,14 @@
 package handlers
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
 	"net/http"
-	"os"
 
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
-
+	"github.com/danielkrainas/canaria-api/actions"
+	"github.com/danielkrainas/canaria-api/api/v1"
 	"github.com/danielkrainas/canaria-api/common"
 	"github.com/danielkrainas/canaria-api/context"
+
+	"github.com/gorilla/handlers"
 )
 
 type webhookTestHandler struct {
@@ -35,12 +30,9 @@ func (wth *webhookTestHandler) PingCanaryHook(w http.ResponseWriter, r *http.Req
 	c := context.GetCanary(wth)
 	hook := context.GetCanaryHook(wth, c)
 
-	context.GetLogger(wth).Infof("pinging hook: %s", hook.Endpoint)
-	logging.Info.Printf("ping hook %s/%s", c.ID, hookId)
-	err = wh.Notify(c, common.EventPing)
-	if err != nil {
-		// logging
-		http.Error(w, fmt.Sprintf(ErrMsgBadHookf, err.Error()), http.StatusAccepted)
+	context.GetLogger(wth).Infof("pinging hook: %s", hook.Url)
+	if err := actions.Notify(wth, hook, c, common.EventPing); err != nil {
+		wth.Context = context.AppendError(wth.Context, v1.ErrorCodeWebhookFailed.WithDetail(err))
 		return
 	}
 

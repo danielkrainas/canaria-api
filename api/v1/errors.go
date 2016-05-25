@@ -29,4 +29,32 @@ var (
 		Description:    "",
 		HttpStatusCode: http.StatusNotFound,
 	})
+
+	ErrorCodeCanaryInvalid = errcode.Register(errGroup, errcode.ErrorDescriptor{
+		Value:          "CANARY_INVALID",
+		Message:        "",
+		Description:    "",
+		HttpStatusCode: http.StatusBadRequest,
+	})
+
+	ErrorCodeWebhookSetupInvalid = errcode.Register(errGroup, errcode.ErrorDescriptor{
+		Value:          "WEBHOOK_INVALID",
+		Message:        "",
+		Description:    "",
+		HttpStatusCode: http.StatusBadRequest,
+	})
+
+	ErrorCodeWebhookUnknown = errcode.Register(errGroup, errcode.ErrorDescriptor{
+		Value:          "WEBHOOK_UNKNOWN",
+		Message:        "",
+		Description:    "",
+		HttpStatusCode: http.StatusNotFound,
+	})
+
+	ErrorCodeWebhookFailed = errcode.Register(errGroup, errcode.ErrorDescriptor{
+		Value:          "WEBHOOK_FAILED",
+		Message:        "",
+		Description:    "",
+		HttpStatusCode: http.StatusAccepted,
+	})
 )

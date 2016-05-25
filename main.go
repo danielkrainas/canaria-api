@@ -8,7 +8,9 @@ import (
 
 	"github.com/danielkrainas/canaria-api/configuration"
 	"github.com/danielkrainas/canaria-api/context"
+	"github.com/danielkrainas/canaria-api/handlers"
 	"github.com/danielkrainas/canaria-api/listener"
+	_ "github.com/danielkrainas/canaria-api/storage/memory"
 
 	log "github.com/Sirupsen/logrus"
 	ghandlers "github.com/gorilla/handlers"
@@ -76,8 +78,7 @@ func (server *CanaryServer) ListenAndServe() error {
 }
 
 func configureLogging(ctx context.Context, config *configuration.Config) (context.Context, error) {
-	log.SetLevel(log.AllLevels)
-
+	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.TextFormatter{
 		TimestampFormat: time.RFC3339Nano,
 	})
@@ -86,7 +87,7 @@ func configureLogging(ctx context.Context, config *configuration.Config) (contex
 	return ctx, nil
 }
 
-func panciHandler(handler http.Handler) http.Handler {
+func panicHandler(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -106,6 +107,6 @@ func alive(path string, handler http.Handler) http.Handler {
 			return
 		}
 
-		handler.ServeHTTP()
+		handler.ServeHTTP(w, r)
 	})
 }

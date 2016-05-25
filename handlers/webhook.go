@@ -1,18 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 
-	"github.com/danielkrainas/canaria-api/api/v1"
+	"github.com/danielkrainas/canaria-api/api/errcode"
 	"github.com/danielkrainas/canaria-api/common"
 	"github.com/danielkrainas/canaria-api/context"
 )
@@ -34,17 +27,17 @@ func webhookDispatcher(ctx context.Context, r *http.Request) http.Handler {
 func (wh *webhookHandler) RemoveCanaryHook(w http.ResponseWriter, r *http.Request) {
 	context.GetLogger(wh).Debug("RemoveCanaryHook")
 	canary := context.GetCanary(wh)
-	hookID := context.GetCanaryHookID(ctx)
-	updated := make([]*common.WebHook, hookCount)
-	for _, h := range c.Hooks {
+	hookID := context.GetCanaryHookID(wh)
+	updated := make([]*common.WebHook, 0)
+	for _, h := range canary.Hooks {
 		if h.ID != hookID {
 			updated = append(updated, h)
 		}
 	}
 
 	canary.Hooks = updated
-	if err := getApp(wh).storage.Save(canary); err != nil {
-		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeInternal.WithDetail(err))
+	if err := getApp(wh).storage.Save(wh, canary); err != nil {
+		wh.Context = context.AppendError(wh.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
 	}
 

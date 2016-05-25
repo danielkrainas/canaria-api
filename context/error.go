@@ -8,9 +8,9 @@ func WithErrors(ctx Context, errors errcode.Errors) Context {
 	return WithValue(ctx, "errors", errors)
 }
 
-func AppendError(ctx Context, ec errcode.ErrorCode) Context {
+func AppendError(ctx Context, err error) Context {
 	errors := GetErrors(ctx)
-	errors = append(errors, ec)
+	errors = append(errors, err)
 	return WithErrors(ctx, errors)
 }
 

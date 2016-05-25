@@ -2,15 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 
 	"github.com/danielkrainas/canaria-api/api/v1"
 	"github.com/danielkrainas/canaria-api/common"
@@ -82,7 +76,7 @@ func (wh *webhooksHandler) CreateCanaryHook(w http.ResponseWriter, r *http.Reque
 	if err := nwh.Validate(); err != nil {
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
-	} else if err := getApp(wh).storage.Save(c); err != nil {
+	} else if err := getApp(wh).storage.Save(wh, c); err != nil {
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	}

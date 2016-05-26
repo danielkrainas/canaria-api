@@ -18,6 +18,7 @@ type Canary struct {
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	NextToken   string     `json:"next"`
+	Tags        []string   `json:"tags"`
 	Hooks       []*WebHook `json:"hooks"`
 }
 
@@ -36,6 +37,7 @@ func (c *Canary) Kill() {
 	c.NextToken = ""
 	c.Title = ""
 	c.Description = ""
+	c.Tags = []string{}
 }
 
 func (c *Canary) IsZombie() bool {

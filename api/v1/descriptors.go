@@ -130,7 +130,7 @@ var APIDescriptor = struct {
 var routeDescriptors = []describe.RouteDescriptor{
 	{
 		Name:        RouteNameBase,
-		Path:        "/v1/",
+		Path:        "/v1",
 		Entity:      "Base",
 		Description: "Base V1 API route, can be used for lightweight version checks and to validate authentication.",
 		Methods: []describe.MethodDescriptor{
@@ -168,7 +168,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 	},
 	{
 		Name:        RouteNameCanaries,
-		Path:        "/v1/canary/",
+		Path:        "/v1/canaries",
 		Entity:      "Canary",
 		Description: "",
 		Methods: []describe.MethodDescriptor{

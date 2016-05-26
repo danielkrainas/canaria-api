@@ -44,7 +44,7 @@ type appRequestContext struct {
 }
 
 func getApp(ctx context.Context) *App {
-	if app, err := ctx.Value("app").(*App); !err {
+	if app, ok := ctx.Value("app").(*App); ok {
 		return app
 	}
 
@@ -78,6 +78,8 @@ func NewApp(ctx context.Context, config *configuration.Config) *App {
 		panic(err)
 	}
 
+	isnil := storage == nil
+	context.GetLogger(app).Infof("using storage %s %v", config.Storage.Type(), isnil)
 	app.storage = storage
 	return app
 }
@@ -224,7 +226,7 @@ func (app *App) register(routeName string, dispatch dispatchFunc) {
 func (app *App) canaryIdRequired(r *http.Request) bool {
 	route := mux.CurrentRoute(r)
 	routeName := route.GetName()
-	return route == nil || routeName != v1.RouteNameBase
+	return route == nil || (routeName != v1.RouteNameBase && routeName != v1.RouteNameCanaries)
 }
 
 func (app *App) hookIdRequired(r *http.Request) bool {

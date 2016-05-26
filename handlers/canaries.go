@@ -28,9 +28,10 @@ func canariesDispatcher(ctx context.Context, r *http.Request) http.Handler {
 }
 
 type canaryRequest struct {
-	TimeToLive  int64  `json:"ttl"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	TimeToLive  int64    `json:"ttl"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
 }
 
 func (r *canaryRequest) Canary() *common.Canary {
@@ -41,6 +42,7 @@ func (r *canaryRequest) Canary() *common.Canary {
 		Description: r.Description,
 		Refreshed:   0,
 		NextToken:   "",
+		Tags:        r.Tags,
 		Hooks:       []*common.WebHook{},
 	}
 

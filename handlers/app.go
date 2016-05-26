@@ -155,6 +155,8 @@ func (app *App) dispatcher(dispatch dispatchFunc) http.Handler {
 				if err := errcode.ServeJSON(w, context.GetErrors(ctx)); err != nil {
 					context.GetLogger(ctx).Errorf("error serving error json: %v (from %v)", err, context.GetErrors(ctx))
 				}
+
+				return
 			}
 		}
 

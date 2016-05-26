@@ -55,6 +55,7 @@ func NewApp(ctx context.Context, config *configuration.Config) *App {
 	app := &App{
 		Context: ctx,
 		Config:  config,
+		router:  v1.RouterWithPrefix(""),
 	}
 
 	app.register(v1.RouteNameBase, func(ctx context.Context, r *http.Request) http.Handler {

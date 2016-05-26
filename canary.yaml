@@ -1,0 +1,9 @@
+version: '0.1'
+
+http:
+  addr: ':6789'
+  net: 'tcp'
+  host: 'localhost:6789'
+
+storage: memory
+

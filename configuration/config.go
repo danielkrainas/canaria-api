@@ -2,16 +2,31 @@ package configuration
 
 import (
 	"fmt"
-	"os"
+	"io"
+	"io/ioutil"
 	"reflect"
 	"strings"
 )
 
-// TODO: load from TOML
-// TODO: load from JSON
-// TODO: load from ENV
-// TODO: implement marshal/unmarshal for Storage
-// TODO: implement marshal/unmarshal for Auth
+func (version *Version) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var versionString string
+	err := unmarshal(&versionString)
+	if err != nil {
+		return err
+	}
+
+	newVersion := Version(versionString)
+	if _, err := newVersion.major(); err != nil {
+		return err
+	}
+
+	if _, err := newVersion.minor(); err != nil {
+		return err
+	}
+
+	*version = newVersion
+	return nil
+}
 
 type Parameters map[string]interface{}
 
@@ -43,6 +58,43 @@ func (storage Storage) setParameter(key string, value interface{}) {
 	storage[storage.Type()][key] = value
 }
 
+func (storage *Storage) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var storageMap map[string]Parameters
+	err := unmarshal(&storageMap)
+	if err == nil && len(storageMap) > 1 {
+		types := make([]string, 0, len(storageMap))
+		for k := range storageMap {
+			types = append(types, k)
+		}
+
+		if len(types) > 1 {
+			return fmt.Errorf("Must provide exactly one storage type. provided: %v", types)
+		}
+
+		*storage = storageMap
+		return nil
+	}
+
+	var storageType string
+	if err = unmarshal(&storageType); err != nil {
+		return err
+	}
+
+	*storage = Storage{
+		storageType: Parameters{},
+	}
+
+	return nil
+}
+
+func (storage Storage) MarshalYAML() (interface{}, error) {
+	if storage.Parameters() == nil {
+		return storage.Type(), nil
+	}
+
+	return map[string]Parameters(storage), nil
+}
+
 type Auth map[string]Parameters
 
 func (auth Auth) Type() string {
@@ -61,6 +113,40 @@ func (auth Auth) setParameter(key string, value interface{}) {
 	auth[auth.Type()][key] = value
 }
 
+func (auth *Auth) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var m map[string]Parameters
+	err := unmarshal(&m)
+	if err != nil {
+		var authType string
+		err = unmarshal(&authType)
+		if err == nil {
+			*auth = Auth{authType: Parameters{}}
+		}
+
+		return err
+	}
+
+	if len(m) > 1 {
+		types := make([]string, 0, len(m))
+		for k := range m {
+			types = append(types, k)
+		}
+
+		return fmt.Errorf("must specify only one auth type. Provided: %v", types)
+	}
+
+	*auth = m
+	return nil
+}
+
+func (auth Auth) MarshalYAML() (interface{}, error) {
+	if auth.Parameters() == nil {
+		return auth.Type(), nil
+	}
+
+	return map[string]Parameters(auth), nil
+}
+
 type HTTPConfig struct {
 	Addr string
 	Net  string
@@ -74,6 +160,8 @@ type Config struct {
 
 	HTTP HTTPConfig
 }
+
+type v0_1Config Config
 
 func newConfig() *Config {
 	config := &Config{
@@ -91,60 +179,35 @@ func newConfig() *Config {
 	return config
 }
 
-func LoadConfig() (*Config, error) {
-	config := newConfig()
-	err := config.BindEnv()
-	if err == nil {
-		err = config.Validate()
+func Parse(rd io.Reader) (*Config, error) {
+	in, err := ioutil.ReadAll(rd)
+	if err != nil {
+		return nil, err
 	}
 
-	return config, err
-}
+	p := NewParser("canary", []VersionedParseInfo{
+		{
+			Version: MajorMinorVersion(0, 1),
+			ParseAs: reflect.TypeOf(v0_1Config{}),
+			ConversionFunc: func(c interface{}) (interface{}, error) {
+				if v0_1, ok := c.(*v0_1Config); ok {
+					if v0_1.Storage.Type() == "" {
+						return nil, fmt.Errorf("no storage configuration provided")
+					}
 
-func (c *Config) BindEnv() error {
-	return mapEnvToObject(c, "CANARY")
-}
+					return (*Config)(v0_1), nil
+				}
 
-func (c *Config) Validate() error {
-	return nil
-}
+				return nil, fmt.Errorf("Expected *v0_1Config, received %#v", c)
+			},
+		},
+	})
 
-func mapEnvToObject(data interface{}, path string) error {
-	v := reflect.ValueOf(data)
-	t := v.Type()
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-		v = v.Elem()
+	config := new(Config)
+	err = p.Parse(in, config)
+	if err != nil {
+		return nil, err
 	}
 
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		fv := v.Field(i)
-		ft := fv.Type()
-
-		if ft.Kind() == reflect.Ptr {
-			ft = ft.Elem()
-		}
-
-		key := fmt.Sprintf("%s_%s", path, strings.ToUpper(f.Name))
-		if ft.Kind() != reflect.Struct && strings.ToLower(f.Tag.Get("config_default")) == "true" {
-			key = path
-		}
-
-		switch ft.Kind() {
-		case reflect.Struct:
-			err := mapEnvToObject(fv.Interface(), key)
-			if err != nil {
-				return err
-			}
-
-		case reflect.String:
-			fv.SetString(os.Getenv(key))
-
-		default:
-			panic(fmt.Sprintf("unsupported type for key %s: %s", key, ft.Kind().String()))
-		}
-	}
-
-	return nil
+	return config, nil
 }

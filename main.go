@@ -19,7 +19,7 @@ import (
 func main() {
 	ctx := context.WithVersion(context.Background(), "0.0.1-alpha")
 
-	config, err := configuration.LoadConfig()
+	config, err := resolveConfiguration(os.Args[1:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error loading configuration: %v\n", err)
 		os.Exit(1)
@@ -33,6 +33,33 @@ func main() {
 	if err = server.ListenAndServe(); err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func resolveConfiguration(args []string) (*configuration.Config, error) {
+	var configPath string
+
+	if len(args) > 0 {
+		configPath = args[0]
+	} else if os.Getenv("CANARY_CONFIG_PATH") != "" {
+		configPath = os.Getenv("CANARY_CONFIG_PATH")
+	}
+
+	if configPath == "" {
+		return nil, fmt.Errorf("configuration path not specified")
+	}
+
+	fp, err := os.Open(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer fp.Close()
+	config, err := configuration.Parse(fp)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing %s: %v", configPath, err)
+	}
+
+	return config, nil
 }
 
 type CanaryServer struct {

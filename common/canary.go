@@ -1,47 +1,38 @@
 package common
 
 import (
-	"crypto/md5"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/satori/go.uuid"
 )
 
 type Canary struct {
-	ID          string     `json:"id"`
-	TimeToLive  int64      `json:"ttl"`
-	Refreshed   int64      `json:"refreshed"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	NextToken   string     `json:"next"`
-	Tags        []string   `json:"tags"`
-	Hooks       []*WebHook `json:"hooks"`
-}
-
-func generateNextToken(currentToken string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(uuid.NewV4().String()+currentToken)))
+	ID         string     `json:"id"`
+	TimeToLive int64      `json:"ttl"`
+	UpdatedAt  int64      `json:"updated_at"`
+	Title      string     `json:"title"`
+	Message    string     `json:"message"`
+	Tags       []string   `json:"tags"`
+	Hooks      []*WebHook `json:"hooks"`
+	Signature  string     `json:"signature"`
 }
 
 func (c *Canary) Refresh() {
-	c.Refreshed = time.Now().Unix()
-	c.NextToken = generateNextToken(c.NextToken)
+	c.UpdatedAt = time.Now().Unix()
 }
 
 func (c *Canary) Kill() {
-	c.Refreshed = 0
+	c.UpdatedAt = 0
 	c.TimeToLive = -1
-	c.NextToken = ""
 	c.Title = ""
-	c.Description = ""
+	c.Message = ""
 	c.Tags = []string{}
+	c.Signature = ""
 }
 
 func (c *Canary) IsZombie() bool {
-	t := time.Unix(c.Refreshed+c.TimeToLive, 0)
+	t := time.Unix(c.UpdatedAt+c.TimeToLive, 0)
 	return time.Now().After(t)
 }
 

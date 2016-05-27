@@ -28,22 +28,23 @@ func canariesDispatcher(ctx context.Context, r *http.Request) http.Handler {
 }
 
 type canaryRequest struct {
-	TimeToLive  int64    `json:"ttl"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags"`
+	TimeToLive int64    `json:"ttl"`
+	Title      string   `json:"title"`
+	Message    string   `json:"message"`
+	Signature  string   `json:"signature"`
+	Tags       []string `json:"tags"`
 }
 
 func (r *canaryRequest) Canary() *common.Canary {
 	d := &common.Canary{
-		ID:          uuid.Generate(),
-		TimeToLive:  r.TimeToLive,
-		Title:       r.Title,
-		Description: r.Description,
-		Refreshed:   0,
-		NextToken:   "",
-		Tags:        r.Tags,
-		Hooks:       []*common.WebHook{},
+		ID:         uuid.Generate(),
+		TimeToLive: r.TimeToLive,
+		Title:      r.Title,
+		Message:    r.Message,
+		UpdatedAt:  0,
+		Tags:       r.Tags,
+		Hooks:      []*common.WebHook{},
+		Signature:  r.Signature,
 	}
 
 	d.Refresh()

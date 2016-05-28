@@ -20,6 +20,7 @@ type WebHook struct {
 	Url         string   `json:"url"`
 	Events      []string `json:"events"`
 	Active      bool     `json:"active"`
+	CanaryID    string   `json:"-"`
 }
 
 type WebHookNotification struct {

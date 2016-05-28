@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/handlers"
 
+	"github.com/danielkrainas/canaria-api/actions"
 	"github.com/danielkrainas/canaria-api/api/errcode"
 	"github.com/danielkrainas/canaria-api/common"
 	"github.com/danielkrainas/canaria-api/context"
@@ -33,9 +34,29 @@ func (ch *canaryHandler) KillCanary(w http.ResponseWriter, r *http.Request) {
 
 	context.GetLogger(ch).Warn("killing canary")
 	c.Kill()
-	if err := getApp(ch).storage.Save(ch, c); err != nil {
+	if err := getApp(ch).storage.Canaries().Store(ch, c); err != nil {
 		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
+	}
+
+	hooks, err := getApp(ch).storage.Hooks().GetForCanary(ch, c.ID)
+	if err != nil {
+		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
+		return
+	}
+
+	for _, wh := range hooks {
+		context.GetLogger(ch).Infof("notifying %s of event %s", wh.ID, common.EventDead)
+		go actions.Notify(ch, wh, c, common.EventDead)
+	}
+
+	if _, err := getApp(ch).storage.Hooks().DeleteForCanary(ch, c.ID); err != nil {
+		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
+		return
+	}
+
+	for _, wh := range hooks {
+		context.GetLogger(ch).Infof("hook removed: %s", wh.ID)
 	}
 
 	// TODO: set location header for canary
@@ -48,7 +69,7 @@ func (ch *canaryHandler) PokeCanary(w http.ResponseWriter, r *http.Request) {
 
 	context.GetLogger(ch).Info("refresh canary")
 	c.Refresh()
-	if err := getApp(ch).storage.Save(ch, c); err != nil {
+	if err := getApp(ch).storage.Canaries().Store(ch, c); err != nil {
 		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
 	}

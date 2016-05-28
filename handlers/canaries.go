@@ -65,7 +65,7 @@ func (ch *canariesHandler) StoreCanary(w http.ResponseWriter, r *http.Request) {
 	if err := c.Validate(); err != nil {
 		ch.Context = context.AppendError(ch.Context, v1.ErrorCodeCanaryInvalid.WithDetail(err))
 		return
-	} else if err = getApp(ch).storage.Save(ch, c); err != nil {
+	} else if err = getApp(ch).storage.Canaries().Store(ch, c); err != nil {
 		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
 	}

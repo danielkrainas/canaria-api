@@ -104,7 +104,7 @@ func (app *App) loadWebhook(ctx *appRequestContext) error {
 }
 
 func (app *App) loadCanary(ctx *appRequestContext) error {
-	if canary, err := app.storage.Get(ctx, context.GetCanaryID(ctx)); err != nil {
+	if canary, err := app.storage.Canaries().Get(ctx, context.GetCanaryID(ctx)); err != nil {
 		context.GetLogger(ctx).Errorf("error resolving canary: %v", err)
 		// TODO: come back to this, append unknown or invalid error
 		/*switch err := err.(type) {
@@ -118,7 +118,7 @@ func (app *App) loadCanary(ctx *appRequestContext) error {
 		} else {
 			context.GetLoggerWithField(ctx, "canary.id", canary.ID).Warnf("killing zombie")
 			canary.Kill()
-			if err := app.storage.Save(ctx, canary); err != nil {
+			if err := app.storage.Canaries().Store(ctx, canary); err != nil {
 				context.GetLogger(ctx).Errorf("error killing zombie canary: %v", err)
 			}
 		}

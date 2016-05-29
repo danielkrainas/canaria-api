@@ -78,8 +78,7 @@ func NewApp(ctx context.Context, config *configuration.Config) *App {
 		panic(err)
 	}
 
-	isnil := storage == nil
-	context.GetLogger(app).Infof("using storage %s %v", config.Storage.Type(), isnil)
+	context.GetLogger(app).Infof("using %q storage driver", config.Storage.Type())
 	app.storage = storage
 	return app
 }

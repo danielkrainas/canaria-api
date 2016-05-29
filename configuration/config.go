@@ -153,7 +153,35 @@ type HTTPConfig struct {
 	Host string
 }
 
+type LogLevel string
+
+func (logLevel *LogLevel) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var strLogLevel string
+	err := unmarshal(&strLogLevel)
+	if err != nil {
+		return err
+	}
+
+	strLogLevel = strings.ToLower(strLogLevel)
+	switch strLogLevel {
+	case "error", "warn", "info", "debug":
+	default:
+		return fmt.Errorf("Invalid log level %s. Must be one of [error, warn, info, debug]", strLogLevel)
+	}
+
+	*logLevel = LogLevel(strLogLevel)
+	return nil
+}
+
+type LogConfig struct {
+	Level     LogLevel
+	Formatter string
+	Fields    map[string]interface{}
+}
+
 type Config struct {
+	Log LogConfig
+
 	Storage Storage
 
 	Auth Auth
@@ -165,6 +193,12 @@ type v0_1Config Config
 
 func newConfig() *Config {
 	config := &Config{
+		Log: LogConfig{
+			Level:     "debug",
+			Formatter: "text",
+			Fields:    make(map[string]interface{}),
+		},
+
 		Auth: make(Auth),
 
 		Storage: make(Storage),

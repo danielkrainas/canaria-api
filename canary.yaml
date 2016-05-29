@@ -1,9 +1,16 @@
 version: '0.1'
 
+log:
+  level: 'debug'
+  formatter: 'text'
+  fields:
+    chicken: "123"
+    turkey: "456"
+
 http:
   addr: ':6789'
   net: 'tcp'
   host: 'localhost:6789'
 
-storage: memory
+storage: 'memory'
 

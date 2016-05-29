@@ -93,7 +93,6 @@ func newCanaryServer(ctx context.Context, config *configuration.Config) (*Canary
 
 func (server *CanaryServer) ListenAndServe() error {
 	config := server.config
-
 	ln, err := listener.NewListener(config.HTTP.Net, config.HTTP.Addr)
 	if err != nil {
 		return err
@@ -105,13 +104,56 @@ func (server *CanaryServer) ListenAndServe() error {
 }
 
 func configureLogging(ctx context.Context, config *configuration.Config) (context.Context, error) {
-	log.SetLevel(log.DebugLevel)
-	log.SetFormatter(&log.TextFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	})
+
+	log.SetLevel(logLevel(config.Log.Level))
+	formatter := config.Log.Formatter
+	if formatter == "" {
+		formatter = "text"
+	}
+
+	switch formatter {
+	case "json":
+		log.SetFormatter(&log.JSONFormatter{
+			TimestampFormat: time.RFC3339Nano,
+		})
+
+	case "text":
+		log.SetFormatter(&log.TextFormatter{
+			TimestampFormat: time.RFC3339Nano,
+		})
+
+	default:
+		if config.Log.Formatter != "" {
+			return ctx, fmt.Errorf("unsupported log formatter: %q", config.Log.Formatter)
+		}
+	}
+
+	if config.Log.Formatter != "" {
+		log.Debugf("using %q logging formatter", config.Log.Formatter)
+	}
+
+	if len(config.Log.Fields) > 0 {
+		var fields []interface{}
+		for k := range config.Log.Fields {
+			fields = append(fields, k)
+		}
+
+		ctx = context.WithValues(ctx, config.Log.Fields)
+		ctx = context.WithLogger(ctx, context.GetLogger(ctx, fields...))
+	}
 
 	ctx = context.WithLogger(ctx, context.GetLogger(ctx))
 	return ctx, nil
+}
+
+func logLevel(level configuration.LogLevel) log.Level {
+	l, err := log.ParseLevel(string(level))
+	if err != nil {
+		l = log.InfoLevel
+		log.Warnf("error parsing level %q: %v, using %q", level, err, l)
+	}
+
+	return l
 }
 
 func panicHandler(handler http.Handler) http.Handler {

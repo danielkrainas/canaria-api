@@ -86,9 +86,10 @@ func NewApp(ctx context.Context, config *configuration.Config) *App {
 func (app *App) loadWebhook(ctx *appRequestContext) error {
 	canary := context.GetCanary(ctx)
 	if canary != nil {
-		hook := context.GetCanaryHook(ctx, canary)
-		if hook == nil {
-			context.GetLogger(ctx).Errorf("canary webhook does not exist: %s", context.GetCanaryHookID(ctx))
+		hookID := context.GetCanaryHookID(ctx)
+		hook, err := app.storage.Hooks().Get(ctx, hookID)
+		if err != nil {
+			context.GetLogger(ctx).Errorf("error resolving canary hook: %v", err)
 			return v1.ErrorCodeWebhookUnknown
 		}
 

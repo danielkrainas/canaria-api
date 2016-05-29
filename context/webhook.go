@@ -17,16 +17,5 @@ func GetCanaryHook(ctx Context, c *common.Canary) *common.WebHook {
 		return webhook
 	}
 
-	hookID := GetCanaryHookID(ctx)
-	if hookID == "" {
-		return nil
-	}
-
-	for _, h := range c.Hooks {
-		if h.ID == hookID {
-			return h
-		}
-	}
-
 	return nil
 }

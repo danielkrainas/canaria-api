@@ -26,47 +26,47 @@ func webhooksDispatcher(ctx context.Context, r *http.Request) http.Handler {
 }
 
 type webHookSetupConfig struct {
-	Url         string `json:"url"`
-	ContentType string `json:"content_type"`
-	Secret      string `json:"secret"`
-	InsecureSSL bool   `json:"insecure_ssl"`
+	Url         string `json:"url, omitempty"`
+	ContentType string `json:"content_type, omitempty"`
+	Secret      string `json:"secret, omitempty"`
+	InsecureSSL bool   `json:"insecure_ssl, omitempty"`
+}
+
+func (config *webHookSetupConfig) apply(hook *common.WebHook) {
+	hook.ContentType = config.ContentType
+	hook.Secret = config.Secret
+	hook.Url = config.Url
+	hook.InsecureSSL = config.InsecureSSL
 }
 
 type webHookSetupRequest struct {
-	Name   string              `json:"name"`
-	Config *webHookSetupConfig `json:"config"`
-	Events []string            `json:"events"`
-	Active bool                `json:"active"`
+	Name   string             `json:"name"`
+	Config webHookSetupConfig `json:"config"`
+	Events []string           `json:"events"`
+	Active bool               `json:"active"`
 }
 
-func (whs *webHookSetupRequest) Create() *common.WebHook {
-	wh := common.NewWebHook()
-	wh.ContentType = whs.Config.ContentType
-	wh.Secret = whs.Config.Secret
-	wh.Url = whs.Config.Url
-	wh.InsecureSSL = whs.Config.InsecureSSL
-	wh.Active = whs.Active
-	//wh.Name = whs.Name - not used atm
-	wh.Events = make([]string, len(whs.Events))
+func (whs webHookSetupRequest) Create() *common.WebHook {
+	hook := common.NewWebHook()
+	whs.Config.apply(hook)
+	hook.Active = whs.Active
+	hook.Name = whs.Name
+	hook.Events = make([]string, len(whs.Events))
 	for i, e := range whs.Events {
-		wh.Events[i] = e
+		hook.Events[i] = e
 	}
 
-	return wh
+	return hook
 }
 
 func (wh *webhooksHandler) CreateCanaryHook(w http.ResponseWriter, r *http.Request) {
 	context.GetLogger(wh).Debug("CreateCanaryHook")
 	c := context.GetCanary(wh)
 
-	/*if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeInvalidMediaType)
-		return
-	}*/
-
 	decoder := json.NewDecoder(r.Body)
 	setup := &webHookSetupRequest{}
 	if err := decoder.Decode(setup); err != nil {
+		context.GetLogger(wh).Error(err)
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	}
@@ -75,12 +75,20 @@ func (wh *webhooksHandler) CreateCanaryHook(w http.ResponseWriter, r *http.Reque
 	nwh.CanaryID = c.ID
 	c.Hooks = append(c.Hooks, nwh)
 	if err := nwh.Validate(); err != nil {
+		context.GetLogger(wh).Debug("CreateCanaryHook2")
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	} else if err := getApp(wh).storage.Hooks().Store(wh, nwh); err != nil {
+		context.GetLogger(wh).Debug("CreateCanaryHook3")
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	}
+
+	context.GetLogger(wh).Debug("CreateCanaryHook4")
+
+	context.GetLoggerWithFields(wh, map[interface{}]interface{}{
+		"hook.id": nwh.ID,
+	}).Printf("canary webhook created for %q", nwh.Url)
 
 	// TODO: set location header
 	w.WriteHeader(http.StatusCreated)

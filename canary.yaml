@@ -1,9 +1,9 @@
 version: 0.1
 
-auth:
-  silly:
-    realm: silly-realm
-    service: silly-service
+#auth:
+#  silly:
+#    realm: silly-realm
+#    service: silly-service
 
 log:
   level: 'debug'

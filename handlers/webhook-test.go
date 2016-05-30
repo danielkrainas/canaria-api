@@ -28,7 +28,7 @@ func webhookTestDispatcher(ctx context.Context, r *http.Request) http.Handler {
 func (wth *webhookTestHandler) PingCanaryHook(w http.ResponseWriter, r *http.Request) {
 	context.GetLogger(wth).Debug("PingCanaryHook")
 	c := context.GetCanary(wth)
-	hook := context.GetCanaryHook(wth, c)
+	hook := context.GetCanaryHook(wth)
 
 	context.GetLogger(wth).Infof("pinging hook: %s", hook.Url)
 	if err := actions.Notify(wth, hook, c, common.EventPing); err != nil {

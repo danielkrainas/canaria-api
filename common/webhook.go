@@ -14,6 +14,7 @@ const (
 
 type WebHook struct {
 	ID          string   `json:"id"`
+	Name        string   `json:"name"`
 	ContentType string   `json:"content_type"`
 	Secret      string   `json:"secret"`
 	InsecureSSL bool     `json:"insecure_ssl"`

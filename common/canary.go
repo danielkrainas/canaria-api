@@ -50,10 +50,10 @@ func (c *Canary) Validate() error {
 
 func ServeCanaryJSON(w http.ResponseWriter, c *Canary, status int) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(c); err != nil {
 		return err
 	}
 
-	w.WriteHeader(status)
 	return nil
 }

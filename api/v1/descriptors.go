@@ -392,7 +392,7 @@ var routeDescriptors = []describe.RouteDescriptor{
 				},
 			},
 			{
-				Method:      "POST",
+				Method:      "PATCH",
 				Description: "",
 				Requests: []describe.RequestDescriptor{
 					{},

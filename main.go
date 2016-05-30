@@ -12,6 +12,8 @@ import (
 	"github.com/danielkrainas/canaria-api/listener"
 	_ "github.com/danielkrainas/canaria-api/storage/memory"
 
+	_ "github.com/danielkrainas/canaria-api/auth/silly"
+
 	log "github.com/Sirupsen/logrus"
 	ghandlers "github.com/gorilla/handlers"
 )

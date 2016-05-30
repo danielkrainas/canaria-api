@@ -1,11 +1,13 @@
-version: '0.1'
+version: 0.1
+
+auth:
+  silly:
+    realm: silly-realm
+    service: silly-service
 
 log:
   level: 'debug'
   formatter: 'text'
-  fields:
-    chicken: "123"
-    turkey: "456"
 
 http:
   addr: ':6789'

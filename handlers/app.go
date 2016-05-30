@@ -78,7 +78,19 @@ func NewApp(ctx context.Context, config *configuration.Config) *App {
 		panic(err)
 	}
 
-	context.GetLogger(app).Infof("using %q storage driver", config.Storage.Type())
+	context.GetLogger(app).Debugf("using %q storage driver", config.Storage.Type())
+
+	authType := config.Auth.Type()
+	if authType != "" {
+		strategy, err := auth.GetStrategy(authType, config.Auth.Parameters())
+		if err != nil {
+			panic(fmt.Sprintf("unable to configure authorization (%s): %v", authType, err))
+		}
+
+		app.authStrategy = strategy
+		context.GetLogger(app).Debugf("using %q access strategy", authType)
+	}
+
 	app.storage = storage
 	return app
 }
@@ -201,21 +213,93 @@ func (app *App) logError(ctx context.Context, errors errcode.Errors) {
 	}
 }
 
-func (app *App) authorized(w http.ResponseWriter, r *http.Request, ctx context.Context) error {
+func (app *App) authorized(w http.ResponseWriter, r *http.Request, ctx *appRequestContext) error {
 	context.GetLogger(ctx).Debug("authorizing request")
-
 	if app.authStrategy == nil {
 		return nil
 	}
 
-	// TODO: actually write this
+	var accessRecords []auth.Access
+	canaryId := context.GetCanaryID(ctx)
+	if canaryId != "" {
+		accessRecords = appendAccessRecords(accessRecords, r.Method, canaryId)
+	} else {
+		if app.canaryIdRequired(r) {
+			if err := errcode.ServeJSON(w, errcode.ErrorCodeUnauthorized); err != nil {
+				context.GetLogger(ctx).Errorf("error serving error json: %v (from %v)", err, errcode.ErrorCodeUnauthorized)
+			}
+
+			return fmt.Errorf("forbidden: no canary id")
+		}
+
+		accessRecords = appendCatalogAccessRecords(accessRecords, r)
+	}
+
+	nctx, err := app.authStrategy.Authorized(ctx.Context, accessRecords...)
+	if err != nil {
+		switch err := err.(type) {
+		case auth.Challenge:
+			err.SetHeaders(w)
+			errResult := errcode.ErrorCodeUnauthorized.WithDetail(accessRecords)
+			if err := errcode.ServeJSON(w, errResult); err != nil {
+				context.GetLogger(ctx).Errorf("error serving error json: %v (from %v)", err, errResult)
+			}
+
+		default:
+			context.GetLogger(ctx).Errorf("error checking authorization: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		return err
+	}
+
+	ctx.Context = nctx
 	return nil
+}
+
+func appendAccessRecords(records []auth.Access, method string, canaryId string) []auth.Access {
+	resource := auth.Resource{
+		Type: "canary",
+		Name: canaryId,
+	}
+
+	switch method {
+	case "GET", "HEAD":
+		records = append(records, auth.Access{
+			Resource: resource,
+			Action:   "read",
+		})
+
+	case "POST", "PUT", "PATCH":
+		records = append(records, auth.Access{
+			Resource: resource,
+			Action:   "read",
+		}, auth.Access{
+			Resource: resource,
+			Action:   "write",
+		})
+
+	case "DELETE":
+		records = append(records, auth.Access{
+			Resource: resource,
+			Action:   "kill",
+		}, auth.Access{
+			Resource: resource,
+			Action:   "write",
+		})
+	}
+
+	return records
+}
+
+func appendCatalogAccessRecords(accessRecords []auth.Access, r *http.Request) []auth.Access {
+	return accessRecords
 }
 
 func (app *App) context(w http.ResponseWriter, r *http.Request) *appRequestContext {
 	ctx := context.DefaultContextManager.Context(app, w, r)
 	ctx = context.WithVars(ctx, r)
-	ctx = context.WithLogger(ctx, context.GetLogger(ctx, "vars.id"))
+	ctx = context.WithLogger(ctx, context.GetLogger(ctx))
 	return &appRequestContext{
 		Context: ctx,
 	}

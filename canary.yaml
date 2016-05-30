@@ -13,6 +13,9 @@ http:
   addr: ':6789'
   net: 'tcp'
   host: 'localhost:6789'
+  headers:
+    x-random: [1]
+    x-another: ['something totally else']
 
 storage: 'memory'
 

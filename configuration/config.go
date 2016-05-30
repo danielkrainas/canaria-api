@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"reflect"
 	"strings"
 )
@@ -148,9 +149,10 @@ func (auth Auth) MarshalYAML() (interface{}, error) {
 }
 
 type HTTPConfig struct {
-	Addr string
-	Net  string
-	Host string
+	Addr    string
+	Net     string
+	Host    string
+	Headers http.Header
 }
 
 type LogLevel string

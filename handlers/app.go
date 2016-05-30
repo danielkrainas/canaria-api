@@ -146,6 +146,12 @@ func (app *App) loadCanary(ctx *appRequestContext) error {
 
 func (app *App) dispatcher(dispatch dispatchFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for hn, hvs := range app.Config.HTTP.Headers {
+			for _, v := range hvs {
+				w.Header().Add(hn, v)
+			}
+		}
+
 		ctx := app.context(w, r)
 
 		if err := app.authorized(w, r, ctx); err != nil {

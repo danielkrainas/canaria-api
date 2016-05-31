@@ -39,13 +39,31 @@ func (app *App) Value(key interface{}) interface{} {
 	return app.Context.Value(key)
 }
 
-type appRequestContext struct {
-	context.Context
-}
-
 func getApp(ctx context.Context) *App {
 	if app, ok := ctx.Value("app").(*App); ok {
 		return app
+	}
+
+	return nil
+}
+
+type appRequestContext struct {
+	context.Context
+
+	URLBuilder *v1.URLBuilder
+}
+
+func (arc *appRequestContext) Value(key interface{}) interface{} {
+	if ks, ok := key.(string); ok && ks == "url.builder" {
+		return arc.URLBuilder
+	}
+
+	return arc.Context.Value(key)
+}
+
+func getURLBuilder(ctx context.Context) *v1.URLBuilder {
+	if ub, ok := ctx.Value("url.builder").(*v1.URLBuilder); ok {
+		return ub
 	}
 
 	return nil
@@ -306,9 +324,12 @@ func (app *App) context(w http.ResponseWriter, r *http.Request) *appRequestConte
 	ctx := context.DefaultContextManager.Context(app, w, r)
 	ctx = context.WithVars(ctx, r)
 	ctx = context.WithLogger(ctx, context.GetLogger(ctx))
-	return &appRequestContext{
+	arc := &appRequestContext{
 		Context: ctx,
 	}
+
+	arc.URLBuilder = v1.NewURLBuilderFromRequest(r, app.Config.HTTP.RelativeURLs)
+	return arc
 }
 
 func (app *App) register(routeName string, dispatch dispatchFunc) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/handlers"
 
+	"github.com/danielkrainas/canaria-api/api/errcode"
 	"github.com/danielkrainas/canaria-api/api/v1"
 	"github.com/danielkrainas/canaria-api/common"
 	"github.com/danielkrainas/canaria-api/context"
@@ -74,21 +75,27 @@ func (wh *webhooksHandler) CreateCanaryHook(w http.ResponseWriter, r *http.Reque
 	nwh := setup.Create()
 	nwh.CanaryID = c.ID
 	if err := nwh.Validate(); err != nil {
-		context.GetLogger(wh).Debug("CreateCanaryHook2")
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	} else if err := getApp(wh).storage.Hooks().Store(wh, nwh); err != nil {
-		context.GetLogger(wh).Debug("CreateCanaryHook3")
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	}
 
-	context.GetLogger(wh).Debug("CreateCanaryHook4")
-
-	context.GetLoggerWithFields(wh, map[interface{}]interface{}{
+	logger := context.GetLoggerWithFields(wh, map[interface{}]interface{}{
 		"hook.id": nwh.ID,
-	}).Printf("canary webhook created for %q", nwh.Url)
+	})
 
-	// TODO: set location header
+	logger.Printf("canary hook created for %q", nwh.Url)
+	hookURL, err := getURLBuilder(wh).BuildCanaryHookURL(c.ID, nwh.ID)
+	if err != nil {
+		logger.Errorf("error building hook url: %v", err)
+		wh.Context = context.AppendError(wh.Context, errcode.ErrorCodeUnknown.WithDetail(err))
+		return
+	}
+
+	w.Header().Set("X-Canary-ID", c.ID)
+	w.Header().Set("X-Webhook-ID", nwh.ID)
+	w.Header().Set("Location", hookURL)
 	w.WriteHeader(http.StatusCreated)
 }

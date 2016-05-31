@@ -69,11 +69,20 @@ func (ch *canariesHandler) StoreCanary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	context.GetLoggerWithFields(ch, map[interface{}]interface{}{
+	logger := context.GetLoggerWithFields(ch, map[interface{}]interface{}{
 		"canary.id":  c.ID,
 		"canary.ttl": c.TimeToLive,
-	}).Print("canary created")
+	})
 
-	// TODO: set location header
+	logger.Print("canary created")
+	canaryURL, err := getURLBuilder(ch).BuildCanaryURL(c.ID)
+	if err != nil {
+		logger.Errorf("error building canary url: %v", err)
+		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
+		return
+	}
+
+	w.Header().Set("X-Canary-ID", c.ID)
+	w.Header().Set("Location", canaryURL)
 	w.WriteHeader(http.StatusCreated)
 }

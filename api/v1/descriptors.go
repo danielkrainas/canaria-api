@@ -423,3 +423,12 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 }
+
+var routeDescriptorsMap map[string]describe.RouteDescriptor
+
+func init() {
+	routeDescriptorsMap = make(map[string]describe.RouteDescriptor, len(routeDescriptors))
+	for _, descriptor := range routeDescriptors {
+		routeDescriptorsMap[descriptor.Name] = descriptor
+	}
+}

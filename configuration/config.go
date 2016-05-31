@@ -149,10 +149,11 @@ func (auth Auth) MarshalYAML() (interface{}, error) {
 }
 
 type HTTPConfig struct {
-	Addr    string
-	Net     string
-	Host    string
-	Headers http.Header
+	Addr         string
+	Net          string
+	Host         string
+	Headers      http.Header
+	RelativeURLs bool `yaml:"relativeurls"`
 }
 
 type LogLevel string
@@ -206,9 +207,10 @@ func newConfig() *Config {
 		Storage: make(Storage),
 
 		HTTP: HTTPConfig{
-			Addr: ":5678",
-			Net:  "tcp",
-			Host: "localhost:5678",
+			Addr:         ":5678",
+			Net:          "tcp",
+			Host:         "localhost:5678",
+			RelativeURLs: false,
 		},
 	}
 

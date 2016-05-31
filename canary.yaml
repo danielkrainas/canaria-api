@@ -13,6 +13,7 @@ http:
   addr: ':6789'
   net: 'tcp'
   host: 'localhost:6789'
+  relativeurls: false
   headers:
     x-random: [1]
     x-another: ['something totally else']

@@ -1,6 +1,9 @@
 package common
 
 import (
+	"encoding/json"
+	"net/http"
+
 	"github.com/danielkrainas/canaria-api/uuid"
 )
 
@@ -42,4 +45,14 @@ func (wh *WebHook) Validate() error {
 
 func (wh *WebHook) Deactivate() {
 	wh.Active = false
+}
+
+func ServeWebHookJSON(w http.ResponseWriter, h *WebHook, status int) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(h); err != nil {
+		return err
+	}
+
+	return nil
 }

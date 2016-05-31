@@ -398,6 +398,13 @@ var routeDescriptors = []describe.RouteDescriptor{
 					{},
 				},
 			},
+			{
+				Method:      "GET",
+				Description: "",
+				Requests: []describe.RequestDescriptor{
+					{},
+				},
+			},
 		},
 	},
 	{

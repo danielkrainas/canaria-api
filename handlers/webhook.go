@@ -24,6 +24,15 @@ func webhookDispatcher(ctx context.Context, r *http.Request) http.Handler {
 	return handlers.MethodHandler{
 		"DELETE": http.HandlerFunc(wh.RemoveCanaryHook),
 		"PATCH":  http.HandlerFunc(wh.EditCanaryHook),
+		"GET":    http.HandlerFunc(wh.GetCanaryHook),
+	}
+}
+
+func (wh *webhookHandler) GetCanaryHook(w http.ResponseWriter, r *http.Request) {
+	context.GetLogger(wh).Debug("GetCanaryHook")
+	hook := context.GetCanaryHook(wh)
+	if err := common.ServeWebHookJSON(w, hook, http.StatusOK); err != nil {
+		context.GetLogger(wh).Errorf("error sending webhook json: %v", err)
 	}
 }
 
@@ -52,9 +61,11 @@ func (edit *editHookRequest) applyTo(hook *common.WebHook) {
 	}
 
 	hook.Active = edit.Active
-	hook.Events = make([]string, len(edit.Events))
-	for i, e := range edit.Events {
-		hook.Events[i] = e
+	if len(edit.Events) > 0 {
+		hook.Events = make([]string, len(edit.Events))
+		for i, e := range edit.Events {
+			hook.Events[i] = e
+		}
 	}
 }
 

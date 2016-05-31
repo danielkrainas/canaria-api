@@ -73,7 +73,6 @@ func (wh *webhooksHandler) CreateCanaryHook(w http.ResponseWriter, r *http.Reque
 
 	nwh := setup.Create()
 	nwh.CanaryID = c.ID
-	c.Hooks = append(c.Hooks, nwh)
 	if err := nwh.Validate(); err != nil {
 		context.GetLogger(wh).Debug("CreateCanaryHook2")
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))

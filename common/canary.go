@@ -8,14 +8,13 @@ import (
 )
 
 type Canary struct {
-	ID         string     `json:"id"`
-	TimeToLive int64      `json:"ttl"`
-	UpdatedAt  int64      `json:"updated_at"`
-	Title      string     `json:"title"`
-	Message    string     `json:"message"`
-	Tags       []string   `json:"tags"`
-	Hooks      []*WebHook `json:"hooks"`
-	Signature  string     `json:"signature"`
+	ID         string   `json:"id"`
+	TimeToLive int64    `json:"ttl"`
+	UpdatedAt  int64    `json:"updated_at"`
+	Title      string   `json:"title"`
+	Message    string   `json:"message"`
+	Tags       []string `json:"tags"`
+	Signature  string   `json:"signature"`
 }
 
 func (c *Canary) Refresh() {

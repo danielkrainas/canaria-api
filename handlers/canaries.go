@@ -43,7 +43,6 @@ func (r *canaryRequest) Canary() *common.Canary {
 		Message:    r.Message,
 		UpdatedAt:  0,
 		Tags:       r.Tags,
-		Hooks:      []*common.WebHook{},
 		Signature:  r.Signature,
 	}
 

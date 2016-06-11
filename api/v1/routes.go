@@ -4,7 +4,6 @@ import "github.com/gorilla/mux"
 
 const (
 	RouteNameBase        = "base"
-	RouteNameCanaries    = "canaries"
 	RouteNameCanary      = "canary"
 	RouteNameWebhook     = "webhook"
 	RouteNameWebhooks    = "webhooks"

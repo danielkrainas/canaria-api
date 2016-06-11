@@ -1,0 +1,13 @@
+# Change Log
+All notable changes to this project will be documented in this file.
+This project adheres to [Semantic Versioning](http://semver.org/).
+
+## [Unreleased]
+### Added
+- Basic webhook support (`/canary/<canary_id>/webhook`).
+- Health and version check endpoint (`/v1`).
+- Webhook events for `ping` and `dead`.
+
+## [0.0.1-alpha] - 2016-04-14
+### Added
+- Basic canary support.

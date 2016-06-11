@@ -167,6 +167,72 @@ var routeDescriptors = []describe.RouteDescriptor{
 		},
 	},
 	{
+		Name:        RouteNameCanaries,
+		Path:        "/v1/canaries",
+		Entity:      "Canary",
+		Description: "",
+		Methods: []describe.MethodDescriptor{
+			{
+				Method:      "PUT",
+				Description: "",
+				Requests: []describe.RequestDescriptor{
+					{
+						Headers: []describe.ParameterDescriptor{
+							hostHeader,
+							authHeader,
+						},
+
+						Body: describe.BodyDescriptor{
+							ContentType: "",
+							Format:      canaryRequestBody,
+						},
+
+						Successes: []describe.ResponseDescriptor{
+							{
+								Description: "The canary was accepted by the server.",
+								StatusCode:  http.StatusCreated,
+								Headers: []describe.ParameterDescriptor{
+									{
+										Name:        "Location",
+										Description: "The canonical location url of the created canary.",
+										Type:        "url",
+										Format:      "<url>",
+										Examples:    []string{"https://api.canaria.io/canary/07034f6b-8604-470c-8609-21a79ed0c56b"},
+									},
+									zeroContentLengthHeader,
+								},
+							},
+						},
+
+						Failures: []describe.ResponseDescriptor{
+							{
+								Name:        "Not allowed",
+								Description: "Canary put is not allowed because the server is configured for read-only.",
+								StatusCode:  http.StatusMethodNotAllowed,
+								ErrorCodes: []errcode.ErrorCode{
+									errcode.ErrorCodeUnsupported,
+								},
+							},
+							{
+								Name:        "Invalid Canary",
+								Description: "The received canary settings were invalid in some way as described by the error codes. The client should resolve the issue and retry the request.",
+								StatusCode:  http.StatusBadRequest,
+								Body: describe.BodyDescriptor{
+									ContentType: "application/json; charset=utf-8",
+									Format:      errorsBody,
+								},
+								ErrorCodes: []errcode.ErrorCode{
+									ErrorCodeTTLInvalid,
+								},
+							},
+							unauthorizedResponseDescriptor,
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Name:        RouteNameCanary,
 		Path:        "/v1/canary/{canary_id:" + IdRegex.String() + "}",
 		Entity:      "Canary",
@@ -288,64 +354,6 @@ var routeDescriptors = []describe.RouteDescriptor{
 						Failures: []describe.ResponseDescriptor{
 							deadResponseDescriptor,
 							canaryNotFoundResponseDescriptor,
-							unauthorizedResponseDescriptor,
-						},
-					},
-				},
-			},
-			{
-				Method:      "PUT",
-				Description: "",
-				Requests: []describe.RequestDescriptor{
-					{
-						Headers: []describe.ParameterDescriptor{
-							hostHeader,
-							authHeader,
-						},
-
-						Body: describe.BodyDescriptor{
-							ContentType: "",
-							Format:      canaryRequestBody,
-						},
-
-						Successes: []describe.ResponseDescriptor{
-							{
-								Description: "The canary was accepted by the server.",
-								StatusCode:  http.StatusCreated,
-								Headers: []describe.ParameterDescriptor{
-									{
-										Name:        "Location",
-										Description: "The canonical location url of the created canary.",
-										Type:        "url",
-										Format:      "<url>",
-										Examples:    []string{"https://api.canaria.io/canary/07034f6b-8604-470c-8609-21a79ed0c56b"},
-									},
-									zeroContentLengthHeader,
-								},
-							},
-						},
-
-						Failures: []describe.ResponseDescriptor{
-							{
-								Name:        "Not allowed",
-								Description: "Canary put is not allowed because the server is configured for read-only.",
-								StatusCode:  http.StatusMethodNotAllowed,
-								ErrorCodes: []errcode.ErrorCode{
-									errcode.ErrorCodeUnsupported,
-								},
-							},
-							{
-								Name:        "Invalid Canary",
-								Description: "The received canary settings were invalid in some way as described by the error codes. The client should resolve the issue and retry the request.",
-								StatusCode:  http.StatusBadRequest,
-								Body: describe.BodyDescriptor{
-									ContentType: "application/json; charset=utf-8",
-									Format:      errorsBody,
-								},
-								ErrorCodes: []errcode.ErrorCode{
-									ErrorCodeTTLInvalid,
-								},
-							},
 							unauthorizedResponseDescriptor,
 						},
 					},

@@ -80,6 +80,7 @@ func NewApp(ctx context.Context, config *configuration.Config) *App {
 		return http.HandlerFunc(apiBase)
 	})
 
+	app.register(v1.RouteNameCanaries, canariesDispatcher)
 	app.register(v1.RouteNameCanary, canaryDispatcher)
 	app.register(v1.RouteNameWebhook, webhookDispatcher)
 	app.register(v1.RouteNameWebhooks, webhooksDispatcher)
@@ -338,7 +339,7 @@ func (app *App) register(routeName string, dispatch dispatchFunc) {
 func (app *App) canaryIdRequired(r *http.Request) bool {
 	route := mux.CurrentRoute(r)
 	routeName := route.GetName()
-	return route == nil || (routeName != v1.RouteNameBase && (routeName != v1.RouteNameCanary || (routeName == v1.RouteNameCanary && r.Method != "PUT")))
+	return route == nil || (routeName != v1.RouteNameBase && routeName != v1.RouteNameCanaries)
 }
 
 func (app *App) hookIdRequired(r *http.Request) bool {

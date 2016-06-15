@@ -1,0 +1,23 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "golang.org/x/crypto/bcrypt",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "f3241ce8505855877cc8a9717bd61a0f7c4ea83c",
+			"branch": "master",
+			"path": "/bcrypt",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/blowfish",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "f3241ce8505855877cc8a9717bd61a0f7c4ea83c",
+			"branch": "master",
+			"path": "blowfish",
+			"notests": true
+		}
+	]
+}

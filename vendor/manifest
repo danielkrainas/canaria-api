@@ -18,6 +18,70 @@
 			"branch": "master",
 			"path": "blowfish",
 			"notests": true
+		},
+		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"vcs": "git",
+			"revision": "f3cfb454f4c209e6668c95216c4744b8fddb2356",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/go-yaml/yaml",
+			"repository": "https://github.com/go-yaml/yaml",
+			"vcs": "git",
+			"revision": "a83829b6f1293c91addabc89d0571c246397bbf4",
+			"branch": "v2",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/gorilla/context",
+			"repository": "https://github.com/gorilla/context",
+			"vcs": "git",
+			"revision": "aed02d124ae4a0e94fea4541c8effd05bf0c8296",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/gorilla/handlers",
+			"repository": "https://github.com/gorilla/handlers",
+			"vcs": "git",
+			"revision": "66e6c6f01d8da976ee113437745ca029c2b585a6",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/gorilla/mux",
+			"repository": "https://github.com/gorilla/mux",
+			"vcs": "git",
+			"revision": "9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/satori/go.uuid",
+			"repository": "https://github.com/satori/go.uuid",
+			"vcs": "git",
+			"revision": "879c5887cd475cd7864858769793b2ceb0d44feb",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/airbrake/gobrake.v2",
+			"repository": "https://gopkg.in/airbrake/gobrake.v2",
+			"vcs": "git",
+			"revision": "31c8ff1fb8b79a6947e6565e9a6df535f98a6b94",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/gemnasium/logrus-airbrake-hook.v2",
+			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
+			"vcs": "git",
+			"revision": "31e6fd4bd5a98d8ee7673d24bc54ec73c31810dd",
+			"branch": "master",
+			"notests": true
 		}
 	]
 }

@@ -17,14 +17,16 @@ var (
 )
 
 type Canary struct {
-	ID          string   `json:"id"`
-	TimeToLive  int64    `json:"ttl"`
-	UpdatedAt   int64    `json:"updated_at"`
-	Title       string   `json:"title"`
-	Message     string   `json:"message"`
-	Tags        []string `json:"tags"`
-	Signature   string   `json:"signature"`
-	UpdateToken string   `json:"-"`
+	ID           string   `json:"id"`
+	TimeToLive   int64    `json:"ttl"`
+	UpdatedAt    int64    `json:"updated_at"`
+	Title        string   `json:"title"`
+	Message      string   `json:"message"`
+	Tags         []string `json:"tags"`
+	Signature    string   `json:"signature"`
+	PublicKey    string   `json:"pubkey"`
+	PublicKeyUrl string   `json:"pubkey_url"`
+	UpdateToken  string   `json:"-"`
 }
 
 func (c *Canary) Refresh(lastUpdateToken string) {

@@ -42,11 +42,13 @@ func canariesDispatcher(ctx context.Context, r *http.Request) http.Handler {
 }
 
 type canaryRequest struct {
-	TimeToLive int64    `json:"ttl"`
-	Title      string   `json:"title"`
-	Message    string   `json:"message"`
-	Signature  string   `json:"signature"`
-	Tags       []string `json:"tags"`
+	TimeToLive   int64    `json:"ttl"`
+	Title        string   `json:"title"`
+	Message      string   `json:"message"`
+	Signature    string   `json:"signature"`
+	Tags         []string `json:"tags"`
+	PublicKey    string   `json:"pubkey"`
+	PublicKeyUrl string   `json:"pubkey_url"`
 }
 
 func (r *canaryRequest) Canary() *common.Canary {

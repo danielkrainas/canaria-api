@@ -164,6 +164,7 @@ func (ch *canaryHandler) StoreCanary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set(common.HeaderCanaryID, c.ID)
+	w.Header().Set(common.HeaderCanaryNextUpdateToken, c.UpdateToken)
 	w.Header().Set("Location", canaryURL)
 	w.WriteHeader(http.StatusCreated)
 }

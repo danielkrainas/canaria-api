@@ -4,14 +4,47 @@ import (
 	"github.com/danielkrainas/canaria-api/api/errcode"
 )
 
+type errorsContext struct {
+	Context
+	errors errcode.Errors
+}
+
+func (ctx *errorsContext) Value(key interface{}) interface{} {
+	if ks, ok := key.(string); ok {
+		if ks == "errors" {
+			return ctx.errors
+		} else if ks == "errors.ctx" {
+			return ctx
+		}
+	}
+
+	return ctx.Context.Value(key)
+}
+
 func WithErrors(ctx Context, errors errcode.Errors) Context {
-	return WithValue(ctx, "errors", errors)
+	ectx := getErrorContext(ctx)
+	if ectx == nil {
+		ectx = &errorsContext{
+			Context: ctx,
+			errors:  errors,
+		}
+
+		ctx = ectx
+	} else {
+		ectx.errors = errors
+	}
+
+	return ctx
 }
 
 func AppendError(ctx Context, err error) Context {
-	errors := GetErrors(ctx)
-	errors = append(errors, err)
-	return WithErrors(ctx, errors)
+	ectx := getErrorContext(ctx)
+	if ectx == nil {
+		return WithErrors(ctx, errcode.Errors{err})
+	}
+
+	ectx.errors = append(ectx.errors, err)
+	return ctx
 }
 
 func GetErrors(ctx Context) errcode.Errors {
@@ -20,4 +53,15 @@ func GetErrors(ctx Context) errcode.Errors {
 	}
 
 	return make(errcode.Errors, 0)
+}
+
+func getErrorContext(ctx Context) *errorsContext {
+	v := ctx.Value("errors.ctx")
+	if v == nil {
+		return nil
+	} else if ectx, ok := v.(*errorsContext); ok {
+		return ectx
+	}
+
+	return nil
 }

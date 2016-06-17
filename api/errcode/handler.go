@@ -35,9 +35,9 @@ func GetResponseData(err error) (int, error) {
 
 func ServeJSON(w http.ResponseWriter, err error) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	var status int
 
-	status, err := GetResponseData(err)
-
+	status, err = GetResponseData(err)
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(err); err != nil {
 		return err

@@ -103,14 +103,14 @@ func (ch *canaryHandler) UpdateCanary(w http.ResponseWriter, r *http.Request) {
 	context.GetLogger(ch).Debug("UpdateCanary")
 	c := context.GetCanary(ch)
 
-	context.GetLogger(ch).Info("updating canary")
 	updateToken := r.Header.Get(common.HeaderCanaryUpdateToken)
 	if updateToken == "" || updateToken != c.UpdateToken {
-		ch.Context = context.AppendError(ch.Context, v1.ErrorCodeUpdateTokenInvalid)
+		ch.Context = context.AppendError(ch.Context, v1.ErrorCodeUpdateTokenInvalid.WithDetail(""))
 		return
 	}
 
 	c.Refresh(updateToken)
+	context.GetLogger(ch).Info("update canary")
 	if err := getApp(ch).storage.Canaries().Store(ch, c); err != nil {
 		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return

@@ -9,6 +9,13 @@ import (
 const errGroup = "canary.api.v1"
 
 var (
+	ErrorCodeUpdateTokenInvalid = errcode.Register(errGroup, errcode.ErrorDescriptor{
+		Value:          "UPDATE_TOKEN_INVALID",
+		Message:        "",
+		Description:    "",
+		HttpStatusCode: http.StatusBadRequest,
+	})
+
 	ErrorCodeTTLInvalid = errcode.Register(errGroup, errcode.ErrorDescriptor{
 		Value:          "TTL_INVALID",
 		Message:        "",

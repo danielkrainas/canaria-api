@@ -41,6 +41,29 @@ func canariesDispatcher(ctx context.Context, r *http.Request) http.Handler {
 	}
 }
 
+type canaryRequest struct {
+	TimeToLive int64    `json:"ttl"`
+	Title      string   `json:"title"`
+	Message    string   `json:"message"`
+	Signature  string   `json:"signature"`
+	Tags       []string `json:"tags"`
+}
+
+func (r *canaryRequest) Canary() *common.Canary {
+	d := &common.Canary{
+		ID:         uuid.Generate(),
+		TimeToLive: r.TimeToLive,
+		Title:      r.Title,
+		Message:    r.Message,
+		UpdatedAt:  0,
+		Tags:       r.Tags,
+		Signature:  r.Signature,
+	}
+
+	d.Refresh("")
+	return d
+}
+
 func (ch *canaryHandler) KillCanary(w http.ResponseWriter, r *http.Request) {
 	context.GetLogger(ch).Debug("KillCanary")
 	c := context.GetCanary(ch)
@@ -81,14 +104,21 @@ func (ch *canaryHandler) UpdateCanary(w http.ResponseWriter, r *http.Request) {
 	c := context.GetCanary(ch)
 
 	context.GetLogger(ch).Info("updating canary")
-	c.Refresh()
+	updateToken := r.Header.Get(common.HeaderCanaryUpdateToken)
+	if updateToken == "" || updateToken != c.UpdateToken {
+		ch.Context = context.AppendError(ch.Context, v1.ErrorCodeUpdateTokenInvalid)
+		return
+	}
+
+	c.Refresh(updateToken)
 	if err := getApp(ch).storage.Canaries().Store(ch, c); err != nil {
 		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
 	}
 
-	// TODO: set location header for canary
-	w.WriteHeader(http.StatusSeeOther)
+	w.Header().Set(common.HeaderCanaryNextUpdateToken, c.UpdateToken)
+	w.Header().Set(common.HeaderCanaryID, c.ID)
+	common.ServeCanaryJSON(w, c, http.StatusOK)
 }
 
 func (ch *canaryHandler) GetCanary(w http.ResponseWriter, r *http.Request) {
@@ -99,29 +129,6 @@ func (ch *canaryHandler) GetCanary(w http.ResponseWriter, r *http.Request) {
 	} else if err := common.ServeCanaryJSON(w, c, http.StatusOK); err != nil {
 		context.GetLogger(ch).Errorf("error sending canary json: %v", err)
 	}
-}
-
-type canaryRequest struct {
-	TimeToLive int64    `json:"ttl"`
-	Title      string   `json:"title"`
-	Message    string   `json:"message"`
-	Signature  string   `json:"signature"`
-	Tags       []string `json:"tags"`
-}
-
-func (r *canaryRequest) Canary() *common.Canary {
-	d := &common.Canary{
-		ID:         uuid.Generate(),
-		TimeToLive: r.TimeToLive,
-		Title:      r.Title,
-		Message:    r.Message,
-		UpdatedAt:  0,
-		Tags:       r.Tags,
-		Signature:  r.Signature,
-	}
-
-	d.Refresh()
-	return d
 }
 
 func (ch *canaryHandler) StoreCanary(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +163,7 @@ func (ch *canaryHandler) StoreCanary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("X-Canary-ID", c.ID)
+	w.Header().Set(common.HeaderCanaryID, c.ID)
 	w.Header().Set("Location", canaryURL)
 	w.WriteHeader(http.StatusCreated)
 }

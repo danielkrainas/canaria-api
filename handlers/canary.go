@@ -124,6 +124,7 @@ func (ch *canaryHandler) UpdateCanary(w http.ResponseWriter, r *http.Request) {
 func (ch *canaryHandler) GetCanary(w http.ResponseWriter, r *http.Request) {
 	context.GetLogger(ch).Debug("GetCanary")
 	c := context.GetCanary(ch)
+	w.Header().Set(common.HeaderCanaryID, c.ID)
 	if r.Method == http.MethodHead {
 		w.WriteHeader(http.StatusNoContent)
 	} else if err := common.ServeCanaryJSON(w, c, http.StatusOK); err != nil {

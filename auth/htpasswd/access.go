@@ -55,6 +55,14 @@ func (as *authStrategy) Authorized(ctx context.Context, accessRecords ...auth.Ac
 	if !ok {
 		return nil, &challenge{
 			realm: as.realm,
+			err:   auth.ErrInvalidCredential,
+		}
+	}
+
+	if err := as.AuthenticateUser(username, password); err != nil {
+		context.GetLogger(ctx).Errorf("error authenticating user %q: %v", username, err)
+		return nil, &challenge{
+			realm: as.realm,
 			err:   auth.ErrAuthenticationFailure,
 		}
 	}

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -8,9 +9,11 @@ import (
 )
 
 var (
-	UserKey = "auth.user"
-
+	UserKey     = "auth.user"
 	UserNameKey = "auth.user.name"
+
+	ErrAuthenticationFailure = errors.New("authentication failure")
+	ErrInvalidCredential     = errors.New("invalid authorization credential")
 )
 
 type AuthStrategy interface {

@@ -19,6 +19,7 @@ type Canary struct {
 
 func (c *Canary) Refresh() {
 	c.UpdatedAt = time.Now().Unix()
+
 }
 
 func (c *Canary) Kill() {

@@ -199,7 +199,10 @@ func (app *App) dispatcher(dispatch dispatchFunc) http.Handler {
 		dispatch(ctx, r).ServeHTTP(w, r)
 
 		if errors := context.GetErrors(ctx); errors.Len() > 0 {
-			if err := errcode.ServeJSON(w, errors); err != nil {
+			if r.Method == http.MethodHead {
+				status, _ := errcode.GetResponseData(errors)
+				w.WriteHeader(status)
+			} else if err := errcode.ServeJSON(w, errors); err != nil {
 				context.GetLogger(ctx).Errorf("error serving error json: %v (from %s)", err, errors)
 			}
 

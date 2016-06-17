@@ -5,8 +5,7 @@ import (
 	"net/http"
 )
 
-func ServeJSON(w http.ResponseWriter, err error) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+func GetResponseData(err error) (int, error) {
 	var status int
 
 	switch errs := err.(type) {
@@ -30,6 +29,14 @@ func ServeJSON(w http.ResponseWriter, err error) error {
 	if status == 0 {
 		status = http.StatusInternalServerError
 	}
+
+	return status, err
+}
+
+func ServeJSON(w http.ResponseWriter, err error) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	status, err := GetResponseData(err)
 
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(err); err != nil {

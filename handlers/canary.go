@@ -22,7 +22,7 @@ func canaryDispatcher(ctx context.Context, r *http.Request) http.Handler {
 
 	return handlers.MethodHandler{
 		"DELETE": http.HandlerFunc(ch.KillCanary),
-		"POST":   http.HandlerFunc(ch.PokeCanary),
+		"POST":   http.HandlerFunc(ch.UpdateCanary),
 		"GET":    http.HandlerFunc(ch.GetCanary),
 		"HEAD":   http.HandlerFunc(ch.GetCanary),
 	}
@@ -63,11 +63,11 @@ func (ch *canaryHandler) KillCanary(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusSeeOther)
 }
 
-func (ch *canaryHandler) PokeCanary(w http.ResponseWriter, r *http.Request) {
-	context.GetLogger(ch).Debug("PokeCanary")
+func (ch *canaryHandler) UpdateCanary(w http.ResponseWriter, r *http.Request) {
+	context.GetLogger(ch).Debug("UpdateCanary")
 	c := context.GetCanary(ch)
 
-	context.GetLogger(ch).Info("refresh canary")
+	context.GetLogger(ch).Info("updating canary")
 	c.Refresh()
 	if err := getApp(ch).storage.Canaries().Store(ch, c); err != nil {
 		ch.Context = context.AppendError(ch.Context, errcode.ErrorCodeUnknown.WithDetail(err))

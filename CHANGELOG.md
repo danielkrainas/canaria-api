@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Webhook test endpoint (`/v1/canary/<canary_id>/webhook/<webhook_id>/ping`)
 - YAML config file support.
 - Silly authentication support.
+- htpasswd authentication with bcrypt format password support.
 
 ## [0.0.1-alpha] - 2016-04-14
 ### Added

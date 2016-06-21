@@ -2,24 +2,6 @@
 	"version": 0,
 	"dependencies": [
 		{
-			"importpath": "golang.org/x/crypto/bcrypt",
-			"repository": "https://go.googlesource.com/crypto",
-			"vcs": "git",
-			"revision": "f3241ce8505855877cc8a9717bd61a0f7c4ea83c",
-			"branch": "master",
-			"path": "/bcrypt",
-			"notests": true
-		},
-		{
-			"importpath": "golang.org/x/crypto/blowfish",
-			"repository": "https://go.googlesource.com/crypto",
-			"vcs": "git",
-			"revision": "f3241ce8505855877cc8a9717bd61a0f7c4ea83c",
-			"branch": "master",
-			"path": "blowfish",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
 			"vcs": "git",
@@ -68,6 +50,51 @@
 			"notests": true
 		},
 		{
+			"importpath": "golang.org/x/crypto/bcrypt",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "f3241ce8505855877cc8a9717bd61a0f7c4ea83c",
+			"branch": "master",
+			"path": "/bcrypt",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/blowfish",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "f3241ce8505855877cc8a9717bd61a0f7c4ea83c",
+			"branch": "master",
+			"path": "blowfish",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/ocsp",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "f3241ce8505855877cc8a9717bd61a0f7c4ea83c",
+			"branch": "master",
+			"path": "/ocsp",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/net/context",
+			"repository": "https://go.googlesource.com/net",
+			"vcs": "git",
+			"revision": "7c71ca708c71bcbd0e6c856b01468ee07fe24557",
+			"branch": "master",
+			"path": "/context",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/time/rate",
+			"repository": "https://go.googlesource.com/time",
+			"vcs": "git",
+			"revision": "a4bde12657593d5e90d0533a3e4fd95e635124cb",
+			"branch": "master",
+			"path": "/rate",
+			"notests": true
+		},
+		{
 			"importpath": "gopkg.in/airbrake/gobrake.v2",
 			"repository": "https://gopkg.in/airbrake/gobrake.v2",
 			"vcs": "git",
@@ -80,6 +107,14 @@
 			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
 			"vcs": "git",
 			"revision": "31e6fd4bd5a98d8ee7673d24bc54ec73c31810dd",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "rsc.io/letsencrypt",
+			"repository": "https://github.com/rsc/letsencrypt",
+			"vcs": "git",
+			"revision": "a019c9e6fce0c7132679dea13bd8df7c86ffe26c",
 			"branch": "master",
 			"notests": true
 		}

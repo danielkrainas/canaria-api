@@ -1,7 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -17,6 +21,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	ghandlers "github.com/gorilla/handlers"
+	"rsc.io/letsencrypt"
 )
 
 func main() {
@@ -101,8 +106,73 @@ func (server *CanaryServer) ListenAndServe() error {
 		return err
 	}
 
-	// TODO: add TLS support
-	context.GetLogger(server.app).Infof("listening on %v", ln.Addr())
+	if config.HTTP.TLS.Certificate != "" || config.HTTP.TLS.LetsEncrypt.CacheFile != "" {
+		tlsConfig := &tls.Config{
+			ClientAuth:               tls.NoClientCert,
+			NextProtos:               []string{"http/1.1"},
+			MinVersion:               tls.VersionTLS10,
+			PreferServerCipherSuites: true,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+				tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+			},
+		}
+
+		if config.HTTP.TLS.LetsEncrypt.CacheFile != "" {
+			if config.HTTP.TLS.Certificate != "" {
+				return errors.New("cannot specify both certificate and Let's Encrypt")
+			}
+
+			var m letsencrypt.Manager
+			if err := m.CacheFile(config.HTTP.TLS.LetsEncrypt.CacheFile); err != nil {
+				return err
+			}
+
+			if !m.Registered() {
+				if err := m.Register(config.HTTP.TLS.LetsEncrypt.Email, nil); err != nil {
+					return err
+				}
+			}
+
+			tlsConfig.GetCertificate = m.GetCertificate
+		} else {
+			tlsConfig.Certificates = make([]tls.Certificate, 1)
+			tlsConfig.Certificates[0], err = tls.LoadX509KeyPair(config.HTTP.TLS.Certificate, config.HTTP.TLS.Key)
+			if err != nil {
+				return err
+			}
+		}
+
+		if len(config.HTTP.TLS.ClientCAs) != 0 {
+			pool := x509.NewCertPool()
+			for _, ca := range config.HTTP.TLS.ClientCAs {
+				caPem, err := ioutil.ReadFile(ca)
+				if err != nil {
+					return err
+				}
+
+				if ok := pool.AppendCertsFromPEM(caPem); !ok {
+					return errors.New("could not add CA to pool")
+				}
+			}
+
+			for _, subject := range pool.Subjects() {
+				context.GetLogger(server.app).Debugf("CA Subject: %s", string(subject))
+			}
+
+			ln = tls.NewListener(ln, tlsConfig)
+			context.GetLogger(server.app).Infof("listening on %v, tls", ln.Addr())
+		}
+	} else {
+		context.GetLogger(server.app).Infof("listening on %v", ln.Addr())
+	}
+
 	return server.server.Serve(ln)
 }
 

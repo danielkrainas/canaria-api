@@ -11,6 +11,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - YAML config file support.
 - Silly authentication support.
 - htpasswd authentication with bcrypt format password support.
+- TLS support.
+- TLS with LetsEncrypt support.
 
 ## [0.0.1-alpha] - 2016-04-14
 ### Added

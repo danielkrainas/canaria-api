@@ -153,7 +153,20 @@ type HTTPConfig struct {
 	Net          string
 	Host         string
 	Headers      http.Header
-	RelativeURLs bool `yaml:"relativeurls"`
+	RelativeURLs bool      `yaml:"relativeurls"`
+	TLS          TLSConfig `yaml:"tls,omitempty"`
+}
+
+type TLSConfig struct {
+	Certificate string            `yaml:"certificate,omitempty"`
+	Key         string            `yaml:"key"`
+	ClientCAs   []string          `yaml:"clientcas,omitempty"`
+	LetsEncrypt LetsEncryptConfig `yaml:"letsencrypt,omitempty"`
+}
+
+type LetsEncryptConfig struct {
+	CacheFile string `yaml:"cachefile,omitempty"`
+	Email     string `yaml:"email,omitempty"`
 }
 
 type LogLevel string
@@ -177,19 +190,16 @@ func (logLevel *LogLevel) UnmarshalYAML(unmarshal func(interface{}) error) error
 }
 
 type LogConfig struct {
-	Level     LogLevel
-	Formatter string
-	Fields    map[string]interface{}
+	Level     LogLevel               `yaml:"level,omitempty"`
+	Formatter string                 `yaml:"formatter,omitempty"`
+	Fields    map[string]interface{} `yaml:"fields,omitempty"`
 }
 
 type Config struct {
-	Log LogConfig
-
-	Storage Storage
-
-	Auth Auth
-
-	HTTP HTTPConfig
+	Log     LogConfig  `yaml:"log"`
+	Storage Storage    `yaml:"storage"`
+	Auth    Auth       `yaml:"auth,omitempty"`
+	HTTP    HTTPConfig `yaml:"http"`
 }
 
 type v0_1Config Config

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -25,6 +26,7 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().Unix())
 	ctx := context.WithVersion(context.Background(), "0.0.1-alpha")
 
 	config, err := resolveConfiguration(os.Args[1:])

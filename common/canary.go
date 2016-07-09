@@ -22,7 +22,7 @@ type Canary struct {
 	UpdatedAt    int64    `json:"updated_at"`
 	Title        string   `json:"title"`
 	Message      string   `json:"message"`
-	Tags         []string `json:"tags"`
+	Labels       []string `json:"labels"`
 	Signature    string   `json:"signature"`
 	PublicKey    string   `json:"pubkey"`
 	PublicKeyUrl string   `json:"pubkey_url"`
@@ -41,7 +41,7 @@ func (c *Canary) Kill() {
 	c.TimeToLive = -1
 	c.Title = ""
 	c.Message = ""
-	c.Tags = []string{}
+	c.Labels = []string{}
 	c.Signature = ""
 	c.UpdateToken = ""
 }

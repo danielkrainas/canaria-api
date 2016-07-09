@@ -46,7 +46,7 @@ type canaryRequest struct {
 	Title        string   `json:"title"`
 	Message      string   `json:"message"`
 	Signature    string   `json:"signature"`
-	Tags         []string `json:"tags"`
+	Labels       []string `json:"labels"`
 	PublicKey    string   `json:"pubkey"`
 	PublicKeyUrl string   `json:"pubkey_url"`
 }
@@ -58,7 +58,7 @@ func (r *canaryRequest) Canary() *common.Canary {
 		Title:      r.Title,
 		Message:    r.Message,
 		UpdatedAt:  0,
-		Tags:       r.Tags,
+		Labels:     r.Labels,
 		Signature:  r.Signature,
 	}
 

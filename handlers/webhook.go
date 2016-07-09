@@ -84,78 +84,32 @@ func (wh *webhookHandler) RemoveCanaryHook(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusAccepted)
 }
 
-type editHookRequest struct {
-	Config *webHookSetupConfig `json:"config, omitempty"`
-	Events []string            `json:"events"`
-	Active bool                `json:"active"`
-}
-
-func (edit *editHookRequest) applyTo(hook *common.WebHook) {
-	if edit.Config != nil {
-		edit.Config.apply(hook)
-	}
-
-	hook.Active = edit.Active
-	if len(edit.Events) > 0 {
-		hook.Events = make([]string, len(edit.Events))
-		for i, e := range edit.Events {
-			hook.Events[i] = e
-		}
-	}
-}
-
 func (wh *webhookHandler) EditCanaryHook(w http.ResponseWriter, r *http.Request) {
 	context.GetLogger(wh).Debug("EditCanaryHook")
 	hook := context.GetCanaryHook(wh)
 
+	updateToken := r.Header.Get(common.HeaderHookUpdateToken)
+	if updateToken == "" || updateToken != hook.UpdateToken {
+		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeUpdateTokenInvalid.WithDetail(""))
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
-	edit := &editHookRequest{}
+	edit := &common.EditHookRequest{}
 	if err := decoder.Decode(edit); err != nil {
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	}
 
-	edit.applyTo(hook)
+	hook.Update(edit, updateToken)
 	if err := getApp(wh).storage.Hooks().Store(wh, hook); err != nil {
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 	}
 
-	// TODO: location header or webhook json body
-	w.WriteHeader(http.StatusOK)
-}
-
-type webHookSetupConfig struct {
-	Url         string `json:"url, omitempty"`
-	ContentType string `json:"content_type, omitempty"`
-	Secret      string `json:"secret, omitempty"`
-	InsecureSSL bool   `json:"insecure_ssl, omitempty"`
-}
-
-func (config *webHookSetupConfig) apply(hook *common.WebHook) {
-	hook.ContentType = config.ContentType
-	hook.Secret = config.Secret
-	hook.Url = config.Url
-	hook.InsecureSSL = config.InsecureSSL
-}
-
-type webHookSetupRequest struct {
-	Name   string             `json:"name"`
-	Config webHookSetupConfig `json:"config"`
-	Events []string           `json:"events"`
-	Active bool               `json:"active"`
-}
-
-func (whs webHookSetupRequest) Create() *common.WebHook {
-	hook := common.NewWebHook()
-	whs.Config.apply(hook)
-	hook.Active = whs.Active
-	hook.Name = whs.Name
-	hook.Events = make([]string, len(whs.Events))
-	for i, e := range whs.Events {
-		hook.Events[i] = e
-	}
-
-	return hook
+	w.Header().Set(common.HeaderHookNextUpdateToken, hook.UpdateToken)
+	w.Header().Set(common.HeaderCanaryID, hook.CanaryID)
+	w.Header().Set(common.HeaderHookID, hook.ID)
+	common.ServeWebHookJSON(w, hook, http.StatusOK)
 }
 
 func (wh *webhookHandler) CreateCanaryHook(w http.ResponseWriter, r *http.Request) {
@@ -163,37 +117,37 @@ func (wh *webhookHandler) CreateCanaryHook(w http.ResponseWriter, r *http.Reques
 	c := context.GetCanary(wh)
 
 	decoder := json.NewDecoder(r.Body)
-	setup := &webHookSetupRequest{}
-	if err := decoder.Decode(setup); err != nil {
+	edit := &common.EditHookRequest{}
+	if err := decoder.Decode(edit); err != nil {
 		context.GetLogger(wh).Error(err)
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	}
 
-	nwh := setup.Create()
-	nwh.CanaryID = c.ID
-	if err := nwh.Validate(); err != nil {
+	hook := edit.Hook()
+	hook.CanaryID = c.ID
+	if err := hook.Validate(); err != nil {
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
-	} else if err := getApp(wh).storage.Hooks().Store(wh, nwh); err != nil {
+	} else if err := getApp(wh).storage.Hooks().Store(wh, hook); err != nil {
 		wh.Context = context.AppendError(wh.Context, v1.ErrorCodeWebhookSetupInvalid.WithDetail(err))
 		return
 	}
 
 	logger := context.GetLoggerWithFields(wh, map[interface{}]interface{}{
-		"hook.id": nwh.ID,
+		"hook.id": hook.ID,
 	})
 
-	logger.Printf("canary hook created for %q", nwh.Url)
-	hookURL, err := getURLBuilder(wh).BuildCanaryHookURL(c.ID, nwh.ID)
+	logger.Printf("canary hook created for %q", hook.Url)
+	hookURL, err := getURLBuilder(wh).BuildCanaryHookURL(c.ID, hook.ID)
 	if err != nil {
 		logger.Errorf("error building hook url: %v", err)
 		wh.Context = context.AppendError(wh.Context, errcode.ErrorCodeUnknown.WithDetail(err))
 		return
 	}
 
-	w.Header().Set("X-Canary-ID", c.ID)
-	w.Header().Set("X-Webhook-ID", nwh.ID)
+	w.Header().Set(common.HeaderCanaryID, c.ID)
+	w.Header().Set(common.HeaderHookID, hook.ID)
 	w.Header().Set("Location", hookURL)
 	w.WriteHeader(http.StatusCreated)
 }

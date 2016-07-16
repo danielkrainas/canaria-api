@@ -19,6 +19,7 @@ import (
 
 	_ "github.com/danielkrainas/canaria-api/auth/htpasswd"
 	_ "github.com/danielkrainas/canaria-api/auth/silly"
+	_ "github.com/danielkrainas/canaria-api/auth/token"
 
 	log "github.com/Sirupsen/logrus"
 	ghandlers "github.com/gorilla/handlers"

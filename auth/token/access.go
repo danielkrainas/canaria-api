@@ -3,6 +3,8 @@ package token
 import (
 	"crypto"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -226,11 +228,11 @@ func (ac *authStrategy) Authorized(ctx context.Context, accessItems ...auth.Acce
 	rawToken := parts[1]
 	claims := &RegistryClaims{}
 	token, err := jwt.ParseWithClaims(rawToken, *claims, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		/*if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
+		}*/
 
-		return hmacSampleSecret, nil
+		return nil, nil
 	})
 
 	if err != nil {
@@ -283,21 +285,134 @@ func verify(token *jwt.Token, claims RegistryClaims, verifyOptions VerifyOptions
 		return ErrInvalidToken
 	}
 
-	signingKey, err := token.VerifySigningKey(verifyOptions)
+	signingKey, err := verifySigningKey(token, verifyOptions)
 	if err != nil {
-		log.Errorf(err)
+		log.Error(err)
 		return ErrInvalidToken
 	}
 
-	jwt.fr
-
-	token.Method.Verify(token.SigningString(), token.Signature, 
-	if err := signingKey.Verify(strings.NewReader(token.Raw), token.Method.Alg(), token.Signature); err != nil {
+	if err = signingKey.Verify(strings.NewReader(token.Raw), token.Method.Alg(), []byte(token.Signature)); err != nil {
 		log.Errorf("unable to verify token signature: %s", err)
 		return ErrInvalidToken
 	}
 
 	return nil
+}
+
+func verifySigningKey(token *jwt.Token, verifyOptions VerifyOptions) (libtrust.PublicKey, error) {
+	var err error
+	var signingKey libtrust.PublicKey
+	x5c, _ := token.Header["x5c"].([]string)
+	rawJWK, _ := token.Header["jwk"].(*json.RawMessage)
+	keyID, _ := token.Header["kid"].(string)
+
+	switch {
+	case len(x5c) > 0:
+		signingKey, err = parseAndVerifyCertChain(x5c, verifyOptions.Roots)
+	case rawJWK != nil:
+		signingKey, err = parseAndVerifyRawJWK(rawJWK, verifyOptions)
+	case len(keyID) > 0:
+		signingKey = verifyOptions.TrustedKeys[keyID]
+		if signingKey == nil {
+			err = fmt.Errorf("token signed by untrusted key with ID: %q", keyID)
+		}
+
+	default:
+		err = errors.New("unable to get token signing key")
+	}
+
+	return signingKey, err
+}
+
+func parseAndVerifyCertChain(x5c []string, roots *x509.CertPool) (libtrust.PublicKey, error) {
+	if len(x5c) == 0 {
+		return nil, errors.New("empty x509 certificate chain")
+	}
+
+	leafCertDer, err := base64.StdEncoding.DecodeString(x5c[0])
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode leaf certificate: %s", err)
+	}
+
+	leafCert, err := x509.ParseCertificate(leafCertDer)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse leaf certificate: %s", err)
+	}
+
+	intermediates := x509.NewCertPool()
+	for i := 1; i < len(x5c); i++ {
+		intermediateCertDer, err := base64.StdEncoding.DecodeString(x5c[i])
+		if err != nil {
+			return nil, fmt.Errorf("unabel to decode intermediate certificate: %s", err)
+		}
+
+		intermediateCert, err := x509.ParseCertificate(intermediateCertDer)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse intermediate certificate: %s", err)
+		}
+
+		intermediates.AddCert(intermediateCert)
+	}
+
+	verifyOptions := x509.VerifyOptions{
+		Intermediates: intermediates,
+		Roots:         roots,
+		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+	}
+
+	// TODO: check for revocations
+	if _, err := leafCert.Verify(verifyOptions); err != nil {
+		return nil, fmt.Errorf("unable to verify certificate chain: %s", err)
+	}
+
+	leafCryptoKey, ok := leafCert.PublicKey.(crypto.PublicKey)
+	if !ok {
+		return nil, errors.New("unable to get leaf cert public key value")
+	}
+
+	leafKey, err := libtrust.FromCryptoPublicKey(leafCryptoKey)
+	if err != nil {
+		return nil, fmt.Errorf("unable to make libtrust public key from leaf certificate: %s", err)
+	}
+
+	return leafKey, nil
+}
+
+func parseAndVerifyRawJWK(rawJWK *json.RawMessage, verifyOptions VerifyOptions) (libtrust.PublicKey, error) {
+	pubKey, err := libtrust.UnmarshalPublicKeyJWK([]byte(*rawJWK))
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode raw JWK value: %s", err)
+	}
+
+	x5cVal, ok := pubKey.GetExtendedField("x5c").([]interface{})
+	if !ok {
+		if _, trusted := verifyOptions.TrustedKeys[pubKey.KeyID()]; !trusted {
+			return nil, errors.New("untrusted JWK with no certificate chain")
+		}
+
+		return pubKey, nil
+	}
+
+	x5c := make([]string, len(x5cVal))
+	for i, val := range x5cVal {
+		certString, ok := val.(string)
+		if !ok || len(certString) == 0 {
+			return nil, errors.New("malformed certificate chain")
+		}
+
+		x5c[i] = certString
+	}
+
+	leafKey, err := parseAndVerifyCertChain(x5c, verifyOptions.Roots)
+	if err != nil {
+		return nil, fmt.Errorf("could not verify JWK certificate chain: %s", err)
+	}
+
+	if pubKey.KeyID() != leafKey.KeyID() {
+		return nil, errors.New("leaf certificate public key ID does not match JWK key ID")
+	}
+
+	return pubKey, nil
 }
 
 type ResourceActions struct {

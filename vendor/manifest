@@ -18,6 +18,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/docker/libtrust",
+			"repository": "https://github.com/docker/libtrust",
+			"vcs": "git",
+			"revision": "aabc10ec26b754e797f9028f4589c5b7bd90dc20",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/go-yaml/yaml",
 			"repository": "https://github.com/go-yaml/yaml",
 			"vcs": "git",
